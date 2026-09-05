@@ -1,39 +1,31 @@
-# Business Reality V1 — Candidate Business Object Catalog
+# Business Reality V1 — Enterprise Business Object Catalog
 
-**Version:** v0.1  
-**Status:** KOE candidate catalog for admission testing  
+**Version:** v0.2  
+**Status:** KOE candidate architecture for admission testing  
 **Owner:** Knowledge & Ontology Engineering (KOE-001)  
 **Design guidance:** approximately 30–40 V1 business objects  
-**Current candidate count:** 37
+**Current candidate count:** 38
 
 ---
 
 ## 1. Purpose
 
-This catalog establishes the candidate V1 business-object map from which Build Spec 001 selects its first implementation subset.
+This catalog defines the enterprise-wide candidate business-object architecture for Business Reality V1.
 
-The count is a design guardrail, not a quota. An item remains a first-class business object only if it survives the object-admission test: independent identity/lifecycle, meaningful relationships, query value, security, ownership, and/or governed actions.
+It is not derived from one customer, opportunity, RFP, project, or source system. Real business episodes are validation fixtures against this architecture, not the source of the architecture itself.
 
-This catalog covers the **Business Reality operational ontology** and the operational resources needed to connect reality to capability, decisions, actions, and outcomes. It does not attempt to duplicate the full Business Intent model or the External Reality model.
+The count is a guardrail, not a quota. An item remains a first-class business object only when its independent identity/lifecycle, relationships, governed actions, security, ownership, temporal behavior, or query value justify it.
 
-Not counted in the 37-object guidance:
+The four design truths apply throughout:
 
-- relationship/link types;
-- contextual roles such as Customer, Partner, Vendor, Competitor, Employee, Candidate, or Stakeholder;
-- event/action subtypes;
-- interfaces;
-- properties/value objects;
-- source bindings;
-- raw evidence records;
-- observations;
-- extraction candidates;
-- reconciliation proposals;
-- vector/search representations;
-- application/agent views.
+1. preserve truth;
+2. allow correction;
+3. keep the core stable;
+4. make boundaries explicit.
 
 ---
 
-## 2. Candidate object map
+## 2. Candidate V1 object architecture — 38
 
 ### A. Enterprise identity and structure — 6
 
@@ -44,33 +36,33 @@ Not counted in the 37-object guidance:
 5. `Position`
 6. `Place`
 
-### B. Relationship and commercial context — 7
+### B. Relationships and commercial/revenue — 8
 
 7. `BusinessRelationship`
 8. `Opportunity`
 9. `Solicitation`
-10. `Proposal`
-11. `Agreement`
-12. `Obligation`
-13. `ContractVehicle`
+10. `Offering`
+11. `Proposal`
+12. `Agreement`
+13. `Obligation`
+14. `ContractVehicle`
 
-### C. Delivery and financial execution — 5
+### C. Delivery and financial execution — 6
 
-14. `Project`
-15. `Deliverable`
-16. `Invoice`
-17. `Payment`
+15. `Project`
+16. `Milestone`
+17. `Deliverable`
 18. `Budget`
+19. `Invoice`
+20. `Payment`
 
-### D. Workforce and executable capability — 7
+### D. Workforce and executable capability — 5
 
-19. `Assignment`
-20. `Capability`
-21. `Skill`
-22. `Credential`
-23. `Certification`
-24. `Availability`
-25. `Capacity`
+21. `Assignment`
+22. `Capability`
+23. `Skill`
+24. `Credential`
+25. `Certification`
 
 ### E. Systems and operational resources — 3
 
@@ -78,33 +70,74 @@ Not counted in the 37-object guidance:
 27. `System`
 28. `Technology`
 
-### F. Compliance — 1
+### F. Legal/compliance state — 1
 
 29. `Registration`
 
-`Registration` includes governed registrations/qualifications with an independent lifecycle, such as foreign qualification in a jurisdiction. `Registered Office` remains a relationship between a LegalEntity and Place rather than a standalone organization type.
-
-### G. Knowledge, activity, judgment, and control — 8
+### G. Knowledge, activity, judgment, and control — 9
 
 30. `Artifact`
 31. `Event`
 32. `Claim`
 33. `Assessment`
-34. `Decision`
-35. `Approval`
-36. `Action`
-37. `Outcome`
+34. `Risk`
+35. `Decision`
+36. `Approval`
+37. `Action`
+38. `Outcome`
 
 ---
 
-## 3. Important non-objects / contextual roles
+## 3. Why these are business objects
 
-The following are **not** separate canonical party identities by default:
+### Identity / structure
+
+`Organization`, `LegalEntity`, `OrganizationalUnit`, `Person`, `Position`, and `Place` anchor durable identity, ownership, authority, location, structure, and relationship context.
+
+`LegalEntity` and `OrganizationalUnit` remain distinct from a generic Organization because they have materially different lifecycle, legal, authority, compliance, ownership, and action semantics.
+
+### Relationships / commercial
+
+`BusinessRelationship` represents a material relationship with its own scope, state, effective period, evidence, and participant roles. Customer, Partner, Vendor, Competitor, Employer, Contractor, Advisor, and similar labels normally remain contextual roles rather than duplicate party identities.
+
+`Opportunity`, `Solicitation`, `Offering`, `Proposal`, `Agreement`, `Obligation`, and `ContractVehicle` each have independent lifecycle, relationships, actions, and query value. A Proposal is not merely one PDF; an Agreement is not merely one signed artifact; a Solicitation is not the same thing as GenSigma's Opportunity.
+
+### Delivery / finance
+
+`Project`, `Milestone`, and `Deliverable` describe execution. `Budget`, `Invoice`, and `Payment` describe material financial structures/events with independent identity, approval, reconciliation, and lifecycle behavior.
+
+### Workforce / capability
+
+`Assignment` connects people/resources to business context and time. `Capability`, `Skill`, `Credential`, and `Certification` have durable meaning across multiple assignments and domains.
+
+`Availability` and `Capacity` are deliberately **not** V1 business objects by default. They are normally temporal measurements/claims about a Person, OrganizationalUnit, Capability, or resource pool. They can be promoted later if independent lifecycle/identity proves necessary.
+
+### Systems / operational resources
+
+`Asset`, `System`, and `Technology` allow the company to represent owned/managed resources, operational systems, and technology dependencies without mirroring CMDB/source schemas blindly.
+
+### Compliance
+
+`Registration` represents governed legal/compliance registrations and qualifications with independent jurisdiction, identifier, status, effective dates, renewal/expiration behavior, and evidence.
+
+A `RegisteredOffice` is normally a typed relationship among LegalEntity, Place, and effective period rather than a separate organization object.
+
+### Knowledge / judgment / control
+
+`Artifact`, `Event`, `Claim`, `Assessment`, `Risk`, `Decision`, `Approval`, `Action`, and `Outcome` support evidence-backed operational reasoning and execution while preserving the distinctions among what was observed, asserted, judged, chosen, authorized, done, and produced.
+
+---
+
+## 4. Contextual roles are not duplicate identities
+
+The following are normally roles or relationship semantics:
 
 ```text
 Customer
+Prospect
 Partner
 Vendor
+Subcontractor
 Competitor
 Technology Provider
 Employee
@@ -115,114 +148,25 @@ Stakeholder
 Decision Maker
 Approver
 Project Resource
+Account Owner
 ```
 
-These are normally contextual roles or relationship semantics attached to canonical Organization or Person identities.
-
-Examples:
+Example:
 
 ```text
 Organization: CRI Advantage
-Role in Opportunity A: teaming partner
-Role in another context: subcontractor
-Possible future role: vendor
+  role in Opportunity A: teaming partner
+  role in Project B: subcontractor
+  role in another context: vendor
 ```
 
-One organization identity can therefore participate in multiple contextual relationships without identity duplication.
+One canonical identity can hold different roles in different scopes and periods.
 
 ---
 
-## 4. Objects that require explicit admission review
+## 5. Explicit non-objects
 
-The following candidates are useful but should be pressure-tested before final V1 promotion:
-
-### `LegalEntity`
-
-Question: independent object type versus specialized Organization shape/interface.
-
-Reason to keep separate: legal identity, registrations, tax/compliance, contracts, ownership, jurisdictions, and independent actions/security.
-
-### `OrganizationalUnit`
-
-Question: independent object type versus Organization specialization.
-
-Reason to keep separate: business units/practices/departments can own work, people, budgets, capabilities, and decisions without being legal entities.
-
-### `Position`
-
-Question: independent object versus relationship/value structure.
-
-Reason to keep separate: position can exist independently of a current holder and carry authority, reporting, capability requirements, and lifecycle.
-
-### `Proposal`
-
-Question: business object versus Artifact specialization.
-
-Reason to keep separate: the commercial proposal has a lifecycle, status, submission/approval actions, customer/opportunity linkage, and multiple artifact versions. The proposal business object should not be identical to one PDF/file.
-
-### `Obligation`
-
-Question: first-class business object versus Agreement property/link.
-
-Reason to keep separate where obligations have owner, due date, status, evidence, fulfillment actions, breach/risk, and lifecycle.
-
-### `Budget`
-
-Question: first-class object versus finance-domain state/value structure.
-
-Keep only if budget needs independent ownership, approvals, effective period, allocation relationships, versioning, and decision/action semantics.
-
-### `Availability` and `Capacity`
-
-Question: first-class objects versus temporal measurements on Person/Capability/OrganizationalUnit.
-
-Do not promote merely to reach the object-count range. Promote only if their lifecycle, provenance, granularity, planning relationships, and decisions require independent identity.
-
-### `Claim`
-
-`Claim` is a governed semantic assertion, distinct from raw evidence/observation. It may be first-class because contradictions, provenance, authority, temporal validity, and promotion history attach to the proposition itself.
-
-Raw evidence records and extraction observations remain outside the canonical business-object count.
-
----
-
-## 5. Build Spec 001 pilot subset
-
-Build Spec 001 should begin with the smallest coherent subset needed to represent the SFO ServiceNow / CRI episode.
-
-### Required pilot objects
-
-1. `Organization`
-2. `Person`
-3. `BusinessRelationship`
-4. `Opportunity`
-5. `Solicitation`
-6. `Proposal`
-7. `Agreement`
-8. `Artifact`
-9. `Event`
-10. `Claim`
-11. `Assessment`
-12. `Decision`
-13. `Approval`
-14. `Action`
-15. `Outcome`
-
-### Conditional pilot objects
-
-16. `Project` — include if award/delivery evidence exists in the fixture.
-17. `Obligation` — include if agreement or solicitation commitments need independent lifecycle semantics.
-18. `OrganizationalUnit` — include when SFO/GenSigma internal/customer units are needed to resolve context correctly.
-
-The initial implementation therefore proves roughly 15–18 business objects, while the wider 37-object candidate catalog continues through admission testing in parallel.
-
----
-
-## 6. Explicit separation from evidence-layer records
-
-The implementation may contain many logical record types that are **not business objects**.
-
-Examples:
+The following are system/evidence constructs, not counted as canonical business objects:
 
 ```text
 RawSourceRecord
@@ -239,50 +183,89 @@ PromotionDecision
 ExtractionRun
 ModelOutput
 SecurityLabel
+VectorEmbedding
+SearchDocument
 ```
 
-These are necessary system/evidence constructs but must not inflate the canonical business ontology count.
+They are necessary implementation resources, but they do not become business nouns merely because the platform stores them.
 
 ---
 
-## 7. Cross-model boundaries
+## 6. Cross-model boundaries
 
 ### Business Intent
 
-Purpose, vision, mission, strategic objectives, initiatives, target markets, desired outcomes, decision criteria, and normative policies belong primarily to Business Intent and are not duplicated into Business Reality merely to make them queryable.
+Purpose, vision, mission, strategic objectives, strategic initiatives, desired outcomes, decision criteria, risk appetite, and normative policies belong primarily to Business Intent.
 
-Business Reality links to those resources where relevant.
+Business Reality links to them; it does not duplicate them.
 
 ### External Reality
 
-Market conditions, regulation changes, competitor moves, public procurement shifts, technology trends, and similar outside conditions belong to External Reality unless they directly instantiate an active Business Reality context, such as a customer-issued Solicitation.
+Market conditions, regulation changes, competitor moves, technology trends, public funding conditions, and similar external conditions belong primarily to External Reality.
+
+External entities may still use shared canonical identity primitives where appropriate, but their environmental interpretation belongs to External Reality.
 
 ### Capability
 
-`Capability` is represented because Business Reality must identify the organizational resources and evidence from which executable capability is assessed. Rich capability evaluation remains its own model/function and should not turn the entire Business Reality graph into a capability model.
+`Capability` has a durable identity in Business Reality because organizations can possess, develop, source, require, and evidence capabilities. Dynamic feasibility—whether GenSigma can execute something now under constraints—belongs to the Capability model/function.
 
 ### Executive Judgment
 
-`Assessment`, `Decision`, `Approval`, `Action`, and `Outcome` are represented for operational traceability. The reasoning method that produces a recommendation or decision belongs to Executive Judgment, not to the Business Reality storage model.
+`Assessment`, `Risk`, `Decision`, `Approval`, `Action`, and `Outcome` are represented for operational traceability. The method that produces judgment belongs to Executive Judgment.
 
 ---
 
-## 8. Next specification step
+## 7. Admission questions still open
 
-For the 15–18 Build Spec 001 objects, KOE must now produce an implementable definition sheet containing:
+The 38 objects are candidates, not frozen schema. The following deserve explicit pressure testing:
 
-- semantic definition;
-- identity rule;
-- lifecycle/state model;
-- required/optional properties;
-- typed links;
-- admissible contextual roles;
-- temporal semantics;
-- evidence/provenance requirements;
-- security behavior;
-- governed actions;
-- competency questions;
-- fixture examples;
-- acceptance assertions.
+- `LegalEntity` vs specialized Organization contract;
+- `OrganizationalUnit` vs specialized Organization contract;
+- `Position` vs structured relationship resource;
+- `Offering` ownership boundary with Business Intent;
+- `Obligation` first-class object vs agreement-derived resource;
+- `Budget` first-class object vs governed financial state;
+- `Milestone` first-class object vs Project event/state construct;
+- `Claim` canonical business object vs governed knowledge resource outside the business-object count;
+- `Approval` independent object vs specialized Decision/Action authorization resource.
 
-That definition sheet is the immediate semantic input to the Codex build.
+Admission decisions must be made on semantics, not target count.
+
+---
+
+## 8. Object-definition contract
+
+Every admitted V1 object must eventually specify:
+
+```text
+canonical definition
+identity rule
+lifecycle / states
+required and optional properties
+typed relationships
+contextual roles
+effective-time behavior
+evidence / provenance requirements
+security / authority behavior
+allowed governed actions
+correction / supersession behavior
+competency questions
+acceptance assertions
+```
+
+An object is not implementation-ready until those semantics are sufficient for two independent engineers to implement it without assigning different business meaning.
+
+---
+
+## 9. Validation requirement
+
+The architecture must be pressure-tested across multiple domains:
+
+1. commercial pursuit;
+2. delivery/project execution;
+3. workforce/resource lifecycle;
+4. legal/compliance lifecycle;
+5. vendor/technology lifecycle;
+6. financial execution.
+
+No single fixture has privileged architectural status.
