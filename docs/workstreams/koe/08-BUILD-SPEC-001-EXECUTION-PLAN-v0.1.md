@@ -1,18 +1,32 @@
-# Build Spec 001 Execution Plan — Business Reality MVP
+# Build Spec 001 Execution Plan — Business Reality Semantic Foundation
 
-**Version:** v0.1  
+**Version:** v0.2  
 **Status:** Active execution plan  
 **Owner:** Knowledge & Ontology Engineering (KOE-001)  
-**Primary build target:** Business Reality MVP  
-**Primary pilot:** SFO ServiceNow / CRI Advantage pursuit
+**Primary build target:** Enterprise Business Reality semantic foundation
 
 ---
 
 ## 1. Direction
 
-The program is no longer organized around a generic `World Model` abstraction.
+Build Spec 001 is not a customer-specific pilot and not a narrow RFP ontology.
 
-The active model architecture is:
+Its purpose is to define the stable semantic foundation for GenSigma's Business Reality across the enterprise.
+
+The governing design truths are:
+
+1. preserve truth;
+2. allow correction;
+3. keep the core stable;
+4. make boundaries explicit.
+
+The V1 ontology guidance is approximately **30–40 business objects**. The specification should define the full enterprise object architecture and cross-domain contracts before implementation decisions are allowed to shape meaning.
+
+Implementation may proceed incrementally once a kernel contract is stable, but it must implement the enterprise semantics rather than derive them from one episode.
+
+---
+
+## 2. Architecture boundary
 
 ```text
 Business Intent
@@ -26,300 +40,203 @@ Business Intent
         -> Outcome / Learning
 ```
 
-Build Spec 001 is the first executable slice of **Business Reality**.
+Build Spec 001 owns the **Business Reality semantic foundation** and the operational resources needed to connect it safely to the other models.
 
-The V1 enterprise ontology design guidance is approximately **30–40 business objects**, but Build Spec 001 MUST NOT wait for all 30–40 objects to be fully modeled. The first build should implement the smallest coherent subset required to prove the architecture against a real GenSigma episode.
-
----
-
-## 2. Working mode
-
-### ChatGPT conversation = architecture control plane
-
-Use the Knowledge & Ontology Engineering thread to:
-
-- define semantics;
-- resolve object boundaries;
-- define identity, context, time, evidence, security, and promotion behavior;
-- define logical APIs and action semantics;
-- define competency questions and acceptance tests;
-- review implementation behavior against the specification;
-- approve semantic changes before they become implementation assumptions.
-
-### Codex = implementation workbench
-
-Use Codex for:
-
-- multi-file code changes;
-- repository-wide refactors;
-- schema/type definitions;
-- API implementation;
-- fixtures and seed data;
-- test harnesses;
-- ingestion/reconciliation code;
-- running tests and inspecting failures;
-- implementation PRs.
-
-Codex MUST implement the semantic contract; it MUST NOT invent ontology meaning, canonical promotion rules, identity behavior, time semantics, or security semantics when the specification is silent.
-
-If implementation exposes an unresolved semantic choice, return that choice to KOE rather than hard-coding an assumption.
+It does not define the reasoning algorithm of Executive Judgment, the full Business Intent ontology, the full External Reality model, or physical persistence technology.
 
 ---
 
-## 3. Build gate
+## 3. Specification sequence
 
-We do **not** wait for a perfect enterprise ontology before building.
+### S1 — Semantic kernel
 
-Implementation begins when the following Build Spec 001 kernel is explicit enough that an engineer does not need to invent semantics:
+Define the cross-domain primitives and invariants that all business objects inherit or compose:
 
-1. pilot boundary and evidence corpus;
-2. canonical object subset for the pilot;
-3. object identity and key properties;
-4. relationship/link semantics;
-5. event / decision / action / outcome distinctions;
-6. claim/evidence/provenance structure;
-7. identity and context reconciliation outcomes;
-8. temporal semantics;
-9. canonical promotion rules;
-10. security semantics;
-11. read/query contract;
-12. proposed-write contract;
-13. benchmark queries;
-14. fixture manifest;
-15. executable acceptance tests.
+- canonical identity;
+- typed relationships;
+- contextual roles;
+- state and lifecycle;
+- effective/source/recorded/discovered time;
+- evidence/provenance;
+- epistemic status;
+- security/authority;
+- Event / Decision / Action / Outcome distinctions;
+- audit/correction semantics;
+- versioning and migration behavior.
 
-When these are stable, Build Spec 001 is buildable even though the wider 30–40-object V1 ontology continues to mature.
+### S2 — Full V1 business-object architecture
 
----
+Define and admission-test the approximately 30–40 enterprise business objects across:
 
-## 4. Spec completion sequence
+- enterprise identity and structure;
+- commercial/revenue;
+- agreements/legal;
+- delivery/project execution;
+- workforce/resources;
+- finance;
+- compliance;
+- systems/technology/assets;
+- knowledge/activity/judgment/control.
 
-### S1 — Canonical object catalog for the pilot
+For every admitted object define:
 
-For every business object used by the SFO/CRI episode, define:
-
-- canonical name;
-- definition;
-- admission rationale;
+- semantic definition;
 - identity rule;
 - lifecycle/state;
 - key properties;
-- allowed relationships;
+- typed relationships;
 - temporal behavior;
 - evidence requirements;
-- security considerations;
-- actions that may operate on it.
+- security behavior;
+- governed actions;
+- correction behavior.
 
-The pilot should reuse enterprise-level objects and MUST NOT introduce SFO- or CRI-specific classes.
+### S3 — Relationship and role architecture
 
-### S2 — Link and role catalog
+Define cross-domain links, participant roles, scope, lifecycle, cardinality where material, and relationship identity.
 
-Define typed semantic relationships needed by the episode, including cardinality/scope where material.
-
-Examples include organization participation, opportunity/customer relationships, solicitation-to-opportunity, person participation, partner-in-opportunity, agreement governance, artifact evidence, decision/action/outcome links, and identity/source mappings.
-
-Roles such as Customer, Partner, Vendor, Employee, Stakeholder, Candidate, or Decision Maker should remain contextual unless the object admission test demonstrates an independent object is required.
-
-### S3 — State, event, decision, action, outcome model
-
-Define the minimum event and action vocabulary needed to reconstruct and operate the SFO/CRI lifecycle.
-
-Preserve the distinction:
-
-```text
-Event    = what happened
-Decision = what choice was made
-Action   = what was done
-Outcome  = what resulted
-```
+Roles such as Customer, Partner, Vendor, Employee, Contractor, Candidate, Stakeholder, Decision Maker, and Approver are contextual unless independent identity/lifecycle requirements justify otherwise.
 
 ### S4 — Evidence and epistemic contract
 
-Finalize the logical representation of:
+Finalize observation, claim, evidence, authority, contradiction, inference, provenance, lineage, promotion, rejection, supersession, and correction semantics.
 
-- raw source reference;
-- observation;
-- claim;
-- candidate;
-- supporting/contradicting evidence;
-- origin lineage;
-- authority;
-- explicit vs inferred/reconstructed status;
-- promotion/rejection/correction history.
+### S5 — Identity and context reconciliation contract
 
-### S5 — Identity and context resolution contract
+Define exact match, alias, historical name, parent/child, organizational unit, related-but-distinct, merge, split, new identity proposal, unresolved, and multiple-plausible outcomes.
 
-Define legal outcomes for entity/context reconciliation, including:
+### S6 — Temporal/state contract
 
-- exact match;
-- alias;
-- historical name;
-- parent/child;
-- organizational unit;
-- related but distinct;
-- merge proposal;
-- split proposal;
-- new canonical entity proposal;
-- unresolved;
-- multiple plausible matches.
+Define effective time, source time, recorded time, discovery time, state intervals, supersession, historical `as_of` behavior, hypothetical isolation, and correction/replay.
 
-### S6 — Temporal and security contract
+### S7 — Security and authority contract
 
-Lock business/effective time, source time, recorded time, discovery time, supersession/correction behavior, and historical `as_of` semantics.
+Define semantic access policy, source ACL propagation, object/property/evidence restrictions, actor identity, delegation, approval authority, and governed action permissions.
 
-Define security propagation from source evidence through candidate and canonical layers, including security-aware search and traversal.
+### S8 — Query and action contract
 
-### S7 — Logical API contract
+Define enterprise query patterns and governed verbs before storage selection.
 
-Finalize read operations, proposed-write operations, error states, ambiguity responses, provenance exposure, security context, and historical query behavior.
+### S9 — Verification suite
 
-Physical database technology remains unspecified until the workload is benchmarked.
+Convert invariants and competency questions into machine-testable assertions.
 
-### S8 — Acceptance fixture package
+### S10 — Multi-domain validation portfolio
 
-Create a reproducible SFO/CRI fixture set containing representative Outlook messages and SharePoint artifacts/versions or sanitized equivalents, expected extraction candidates, expected identity/context outcomes, expected canonical state, expected contradictions/unknowns, and at least one restricted-security case.
-
-### S9 — Executable acceptance suite
-
-Translate competency questions into machine-testable assertions.
-
-The spec is ready for implementation when these tests define what success means before the implementation exists.
+Pressure-test the same semantic foundation against materially different enterprise scenarios rather than one golden episode.
 
 ---
 
-## 5. Build sequence
+## 4. Validation portfolio
 
-### Build 1 — Semantic kernel
+At minimum, Build Spec 001 must survive these scenario families:
 
-Implement the logical types/contracts for canonical objects, relationships, claims/evidence, time, security context, and proposed mutations.
+### A. Commercial pursuit
+Opportunity, solicitation, account/customer context, partner relationship, proposal, agreement, decision, action.
 
-Goal: representation and invariants, not sophisticated AI extraction.
+### B. Delivery/project execution
+Project, assignment, milestone/deliverable, customer acceptance, invoice/payment linkage, outcome.
 
-### Build 2 — Fixture-backed Business Reality service
+### C. Workforce/resource lifecycle
+Person, position, employment/engagement relationship, skill, credential, assignment, availability/capacity.
 
-Load the pilot fixtures through deterministic/manual adapters first and prove:
+### D. Legal/compliance lifecycle
+Legal entity, jurisdiction/place, registration/qualification, certification, obligation, renewal/expiration.
 
-- identity resolution states;
-- evidence-backed canonical state;
-- temporal reads;
-- relationship traversal;
-- decision trace reconstruction;
-- security filtering;
-- canonical promotion/correction auditability.
+### E. Vendor/technology lifecycle
+Organization relationship, agreement, system, technology, asset, cost/risk/capability dependency.
 
-### Build 3 — Outlook and SharePoint sensor pipeline
+### F. Financial execution
+Agreement/project, budget, invoice, payment, receivable/payable state, financial outcome.
 
-Connect actual/sanitized source capture to the evidence layer while preserving immutable source identity, hashes, versions, timestamps, ACLs, and lineage.
-
-Sensors create evidence and candidates; they do not create canonical truth directly.
-
-### Build 4 — Candidate extraction and reconciliation assistance
-
-Introduce LLM/probabilistic extraction for observations, claims, aliases, candidate entities, relationships, contexts, events, and decision fragments.
-
-Probabilistic output remains below the canonical boundary until governed promotion.
-
-### Build 5 — Canonical promotion workflow
-
-Implement review/approval, promotion, rejection, correction, merge/split, provenance history, and audit trail.
-
-### Build 6 — Query/context service
-
-Expose the benchmark query suite needed by humans, Executive Judgment, and future agents.
-
-### Build 7 — Pressure test against comparison episodes
-
-Run the same semantic contract against:
-
-- Stridepath / CCSF HRSD;
-- Fivetran partner agreement.
-
-Any SFO/CRI-specific modeling leakage is treated as a defect.
+SFO/CRI may remain one commercial fixture. It has no privileged architectural status.
 
 ---
 
-## 6. Parallel ontology work
+## 5. Coding gate
 
-The wider 30–40-business-object V1 ontology continues in parallel with Build Spec 001.
+Codex may begin implementation when the **semantic kernel** and the contracts required for the component being built are explicit enough that implementation does not need to invent business meaning.
 
-Objects are admitted from real business loops rather than brainstormed exhaustively. Each new object must survive the object-admission test and at least one competency question or governed action test.
+The first build does not require every domain behavior to be complete, but it must be compatible with the full V1 object architecture.
 
-Build Spec 001 is therefore the first proving ground for the ontology, not the final ontology inventory.
+A component is build-ready when these are known:
 
----
-
-## 7. Division of responsibility
-
-### KOE owns
-
-- semantic definitions;
-- object/link boundaries;
-- evidence and epistemic semantics;
-- identity/context/time/security semantics;
-- promotion rules;
-- logical API behavior;
-- competency questions and golden actions;
-- acceptance semantics.
-
-### Evidence & Data Engineering owns
-
-- source capture;
-- normalization;
-- lineage preservation;
-- extraction implementation;
-- evidence/candidate production consistent with KOE contracts.
-
-### Platform Engineering owns
-
-- physical persistence;
-- indexing/search implementation;
-- service/runtime architecture;
-- performance/availability/observability;
-- transaction mechanisms;
-- benchmarked technology selection.
-
-### Executive Cognition consumes
-
-- Business Intent;
-- Business Reality;
-- External Reality;
-- Capability;
-- evidence/uncertainty;
-- decision trace context;
-- governed action definitions.
-
-It does not redefine canonical business semantics.
+- responsibility and boundary;
+- semantic inputs/outputs;
+- invariants;
+- identity and role behavior;
+- time/state behavior;
+- evidence/provenance behavior;
+- security/authority behavior;
+- failure/ambiguity behavior;
+- correction behavior;
+- acceptance tests;
+- adjacent interfaces.
 
 ---
 
-## 8. Immediate next deliverables
+## 6. Build sequence
 
-KOE should now produce, in this order:
+### Build 1 — Semantic kernel and type contracts
 
-1. **Business Reality V1 object catalog — candidate 30–40 object map** with clear L1/L2 boundaries;
-2. **Build Spec 001 pilot object subset** selected from that catalog;
-3. **typed link/role catalog** for the pilot;
-4. **pilot event/action vocabulary**;
-5. **fixture manifest** for SFO/CRI;
-6. **executable acceptance-test specification**;
-7. **Codex implementation brief** referencing the above contracts.
+Implement technology-neutral domain contracts for canonical resources, typed links, state/time, evidence references, epistemic status, security context, audit/correction, and proposed mutations.
 
-After items 2–6 are explicit, implementation should begin in Codex. Items outside the pilot can continue evolving in parallel and should not block the first build.
+### Build 2 — Core Business Reality service
+
+Implement canonical CRUD/proposed-write behavior, historical reads, relationship traversal, promotion/correction, and audit semantics against deterministic fixtures.
+
+### Build 3 — Multi-domain fixtures and tests
+
+Load representative commercial, delivery, workforce, compliance, vendor/technology, and finance fixtures and make the same kernel pass all of them.
+
+### Build 4 — Sensor integration
+
+Add Outlook and SharePoint as sensors that produce evidence/candidates without bypassing canonical governance.
+
+### Build 5 — Probabilistic extraction/reconciliation assistance
+
+Introduce LLM/model assistance below the canonical boundary.
+
+### Build 6 — Governed promotion and review workflow
+
+Implement promotion, rejection, correction, merge/split, provenance history, and review.
+
+### Build 7 — Query/context service
+
+Expose enterprise query contracts to humans, Executive Judgment, and future agents.
+
+### Build 8 — Expand domain modules
+
+Add richer finance, workforce, compliance, delivery, and technology behavior without changing kernel semantics except through governed versioned evolution.
 
 ---
 
-## 9. Non-negotiable build rule
+## 7. Working mode
 
-The program should optimize for a repeating cycle:
+### ChatGPT / KOE thread
+
+Owns semantic architecture, object/link definitions, invariants, correction rules, acceptance semantics, and architecture decisions.
+
+### GitHub
+
+Is the durable source of truth for specifications, ADRs, contracts, fixtures, and implementation changes.
+
+### Codex
+
+Implements the contracts, runs tests, refactors code, and raises semantic ambiguities rather than inventing ontology behavior.
+
+---
+
+## 8. Non-negotiable build loop
 
 ```text
-SPECIFY SEMANTICS
+DEFINE SEMANTICS
     -> WRITE ACCEPTANCE TESTS
-    -> IMPLEMENT IN CODEX
-    -> RUN AGAINST REAL EPISODE
-    -> IDENTIFY SEMANTIC FAILURE
-    -> REFINE ONTOLOGY / SPEC
+    -> IMPLEMENT
+    -> RUN ACROSS MULTIPLE DOMAINS
+    -> FIND FAILURE / AMBIGUITY
+    -> CORRECT SPEC OR CODE
     -> RE-RUN
 ```
 
-The objective is not to finish the ontology before implementation. The objective is to make the ontology computational, testable, and operational as early as possible without allowing implementation convenience to define business meaning.
+The implementation is incremental. The architecture is enterprise-wide.
