@@ -13,11 +13,16 @@ Every agent must begin by reading, in this order where relevant:
 3. `docs/program/01-OPERATING-ARCHITECTURE-v0.1.md`
 4. `docs/program/03A-WORKSTREAM-EXECUTION-UPDATE-v0.1.md`
 5. `docs/program/05-CHIEF-ARCHITECT-DECISION-METHOD-v0.1.md`
-6. `docs/protocols/AGENT-DEFINITION-AND-ESCALATION-STANDARD-v0.1.md`
-7. the agent/workstream role charter under `docs/roles/`
-8. the relevant Build Spec, ADRs, protocols, and task/issue
+6. `docs/program/08-WORKSTREAM-DELIVERY-STANDARD-v0.1.md`
+7. `docs/protocols/AGENT-DEFINITION-AND-ESCALATION-STANDARD-v0.1.md`
+8. the agent/workstream role charter under `docs/roles/`
+9. the relevant Build Spec, ADRs, protocols, execution plan, and task/issue
 
 GitHub is the durable engineering source of truth. Chat history is workshop context, not canonical architecture.
+
+All specialist workstreams use the common delivery cycle defined in `docs/program/08-WORKSTREAM-DELIVERY-STANDARD-v0.1.md`:
+
+`FRAME -> RESEARCH -> DESIGN -> PLAN -> TASK -> BUILD -> VERIFY / LEARN`
 
 ## 2. The two-state question rule
 
@@ -94,11 +99,11 @@ The Chief Architect may respond with:
 
 Material decisions must be written back to GitHub as an ADR, spec/build-spec change, protocol update, or explicit issue/PR decision as appropriate.
 
-## 6. No imaginary wake-up behavior
+## 6. Architecture dispatch
 
-Until an event-driven Chief Architect dispatcher exists, creating an Architecture Decision Request does **not** automatically wake a ChatGPT thread or coding session. The request is durable shared state, but a human/operator must surface it to the Chief Architect.
+Architecture requests marked `needs-architect` or `ask-architect` may be routed automatically through the repository Chief Architect dispatch workflow. The durable GitHub request and resulting disposition remain the source of truth regardless of the transport or model session used.
 
-When automated dispatch is later added, it must implement this same protocol rather than changing the semantic workflow.
+Automation changes transport, not governance.
 
 ## 7. Peer-agent communication
 
@@ -111,15 +116,27 @@ Prefer durable artifacts, issues, PRs, and typed handoffs over long free-form ag
 ## 8. Build/research discipline
 
 - Do not silently drift from approved doctrine.
+- Check established public practice before inventing a novel engineering mechanism when a mature pattern plausibly exists.
 - Do not make source schemas the ontology.
 - Do not let probabilistic output silently become canonical truth.
 - Do not choose infrastructure because of fashion or model preference.
 - Do not broaden task scope without recording it.
 - Use interfaces/contracts to isolate unresolved but reversible implementation choices.
 - Tests, acceptance criteria, and architecture fitness checks are part of the contract, not optional cleanup.
+- When a design is sufficiently specified for a bounded implementation task, stop discussing and build.
 
-## 9. Future agents
+## 9. Durable workstream output
 
-Every future GenSigma OS agent/workstream definition must explicitly inherit `docs/protocols/AGENT-DEFINITION-AND-ESCALATION-STANDARD-v0.1.md` and this file.
+A specialist chat may be used for discussion, research, design, and planning, but material results must be made durable in GitHub. A competent future session must be able to continue without reading the originating chat.
 
-No future role should invent its own architecture-escalation protocol unless the Chief Architect formally supersedes this standard.
+Build-ready work must have an execution plan or equivalent governing design plus bounded implementation issues with explicit acceptance criteria.
+
+## 10. Future agents and workstreams
+
+Every future GenSigma OS agent/workstream definition must explicitly inherit:
+
+- this file;
+- `docs/program/08-WORKSTREAM-DELIVERY-STANDARD-v0.1.md`;
+- `docs/protocols/AGENT-DEFINITION-AND-ESCALATION-STANDARD-v0.1.md`.
+
+No future role should invent its own architecture-escalation or delivery protocol unless the Chief Architect formally supersedes these standards.
