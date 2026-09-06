@@ -1,0 +1,80 @@
+version: 0.1.0
+status: measurement-contract-no-targets-yet
+purpose: define the workload dimensions Platform Engineering must measure before selecting persistence/runtime architecture
+
+principle:
+  targets_must_be_evidence_based: true
+  do_not_invent_scale_or_latency_targets: true
+
+interactive_queries:
+  object_lookup:
+    measures: [p50_ms, p95_ms, p99_ms, error_rate]
+  identity_resolution:
+    measures: [p50_ms, p95_ms, candidate_count, unresolved_rate]
+  relationship_traversal_1_hop:
+    measures: [p50_ms, p95_ms, result_count]
+  relationship_traversal_multi_hop:
+    measures: [p50_ms, p95_ms, depth, result_count]
+  historical_state:
+    measures: [p50_ms, p95_ms, temporal_versions_scanned]
+  evidence_lineage:
+    measures: [p50_ms, p95_ms, lineage_depth]
+  decision_trace:
+    measures: [p50_ms, p95_ms, resources_traversed]
+  security_aware_search:
+    measures: [p50_ms, p95_ms, candidate_count, filtered_count, leakage_failures]
+
+write_workloads:
+  candidate_ingestion:
+    measures: [records_per_second, failure_rate, duplicate_rate]
+  canonical_promotion:
+    measures: [operations_per_second, p95_ms, conflict_rate]
+  identity_merge_split:
+    measures: [p95_ms, affected_relationships, affected_source_mappings]
+  canonical_correction:
+    measures: [p95_ms, affected_projections, rebuild_time]
+
+batch_workloads:
+  source_backfill:
+    measures: [records_per_hour, bytes_per_hour, elapsed_time, cost]
+  projection_rebuild:
+    measures: [objects_per_hour, relationships_per_hour, elapsed_time, cost]
+  extraction_replay:
+    measures: [evidence_items_per_hour, model_calls, elapsed_time, cost]
+
+scale_inputs:
+  horizons: [mvp, year_1, year_3]
+  required_estimates:
+    - raw_evidence_items
+    - normalized_evidence_items
+    - canonical_objects
+    - canonical_relationships
+    - claims_and_observations
+    - historical_versions
+    - artifacts_and_versions
+    - concurrent_human_users
+    - concurrent_agent_actors
+    - daily_reads
+    - daily_promotions
+    - daily_actions
+    - retained_history_years
+
+reliability_inputs:
+  required_targets:
+    - maximum_source_lag
+    - recovery_point_objective
+    - recovery_time_objective
+    - replay_window
+    - acceptable_partial_failure_behavior
+    - exactly_once_effect_requirements
+
+security_benchmarks:
+  required_cases:
+    - direct_object_read
+    - search_result_filtering
+    - snippet_non_leakage
+    - traversal_non_leakage
+    - decision_trace_non_leakage
+    - restricted_evidence_permitted_projection
+
+completion_rule: Platform Engineering must populate evidence-backed target values before a hard-to-reverse persistence/runtime ADR is approved
