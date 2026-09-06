@@ -2,7 +2,7 @@ name: Chief Architect Dispatch
 
 on:
   issues:
-    types: [labeled]
+    types: [opened, labeled]
   workflow_dispatch:
     inputs:
       issue_number:
@@ -18,7 +18,9 @@ jobs:
   dispatch:
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'issues' && github.event.label.name == 'ask-architect')
+      (github.event_name == 'issues' &&
+       (contains(github.event.issue.labels.*.name, 'needs-architect') ||
+        contains(github.event.issue.labels.*.name, 'ask-architect')))
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -80,4 +82,5 @@ jobs:
           )
           gh label create "$STATUS" --repo "$GH_REPO" --color "6f42c1" --description "Chief Architect disposition" --force
           gh issue edit "$ISSUE_NUMBER" --repo "$GH_REPO" --add-label "$STATUS"
+          gh issue edit "$ISSUE_NUMBER" --repo "$GH_REPO" --remove-label "needs-architect" || true
           gh issue edit "$ISSUE_NUMBER" --repo "$GH_REPO" --remove-label "ask-architect" || true
