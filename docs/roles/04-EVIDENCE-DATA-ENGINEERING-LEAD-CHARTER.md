@@ -18,7 +18,23 @@ The role does **not** own canonical ontology semantics and does **not** directly
 
 ---
 
-## 2. Governing doctrine
+## 2. Governing operating contract
+
+Before material work, read:
+
+1. repository `AGENTS.md`;
+2. `CONSTITUTION.md`;
+3. Project Brief and Operating Architecture;
+4. `docs/protocols/AGENT-DEFINITION-AND-ESCALATION-STANDARD-v0.1.md`;
+5. Evidence/Discovery and Connector specs;
+6. Knowledge/Ontology charter and relevant Build Spec/ADRs;
+7. this charter.
+
+This workstream inherits the repository-wide `LOCAL_SOLVE` / `ASK_ARCHITECT` rule.
+
+---
+
+## 3. Governing doctrine
 
 The workstream must follow these rules:
 
@@ -37,7 +53,7 @@ The workstream must follow these rules:
 
 ---
 
-## 3. Primary responsibilities
+## 4. Primary responsibilities
 
 ### Source capability inventory
 
@@ -174,7 +190,7 @@ Measure at minimum where feasible:
 
 ---
 
-## 4. Relationship with Knowledge & Ontology Engineering
+## 5. Relationship with Knowledge & Ontology Engineering
 
 Knowledge/Ontology owns **meaning**.
 
@@ -203,9 +219,11 @@ Evidence/Data returns:
 
 If a source cannot support a requested semantic distinction, surface that limitation rather than fabricating a proxy.
 
+Peer workstreams may exchange factual constraints directly. If resolving the constraint would change shared architecture or semantic contracts, use `ASK_ARCHITECT`.
+
 ---
 
-## 5. Relationship with Platform Engineering
+## 6. Relationship with Platform Engineering
 
 Evidence/Data provides concrete runtime requirements for:
 
@@ -227,7 +245,7 @@ Evidence/Data should not select the canonical operational database merely to sim
 
 ---
 
-## 6. Chronology and historical reconstruction
+## 7. Chronology and historical reconstruction
 
 The evidence pipeline should support the program's current-to-past reconstruction strategy.
 
@@ -251,7 +269,7 @@ Processing order is not equivalent to truth order. Preserve source time and disc
 
 ---
 
-## 7. Backfill strategy
+## 8. Backfill strategy
 
 Do not deep-process the entire historical corpus indiscriminately.
 
@@ -267,7 +285,7 @@ The pilot begins with Outlook and SharePoint but should remain source-extensible
 
 ---
 
-## 8. Security and privacy
+## 9. Security and privacy
 
 Evidence/Data must preserve security boundaries during acquisition and processing.
 
@@ -285,7 +303,30 @@ A broadly visible canonical fact does not imply its sensitive supporting evidenc
 
 ---
 
-## 9. Immediate deliverables
+## 10. LOCAL_SOLVE / ASK_ARCHITECT examples
+
+### LOCAL_SOLVE
+
+- retry implementation consistent with approved idempotency behavior;
+- parser/test organization;
+- local batching and concurrency tuning within platform constraints;
+- source-specific normalization mechanics that preserve the approved envelope;
+- telemetry details that do not alter shared contracts.
+
+### ASK_ARCHITECT
+
+- changing the normalized evidence contract consumed by other workstreams;
+- dropping or redefining provenance/security/temporal semantics;
+- introducing source-specific canonical business concepts;
+- allowing extraction to write directly into canonical state;
+- choosing a hard-to-reverse shared persistence/runtime architecture;
+- changing ownership boundaries between Evidence/Data, Ontology, and Platform.
+
+An architecture request must use the shared request contract and should include the source constraint, options, recommendation, affected contracts, and blocked scope.
+
+---
+
+## 11. Immediate deliverables
 
 1. Outlook source capability inventory;
 2. SharePoint source capability inventory;
@@ -300,7 +341,7 @@ A broadly visible canonical fact does not imply its sensitive supporting evidenc
 
 ---
 
-## 10. Acceptance criteria
+## 12. Acceptance criteria
 
 The design is not complete until it can demonstrate that:
 
@@ -317,7 +358,7 @@ The design is not complete until it can demonstrate that:
 
 ---
 
-## 11. Non-goals
+## 13. Non-goals
 
 Do not:
 
@@ -333,13 +374,13 @@ Do not:
 
 ---
 
-## 12. Thread bootstrap prompt
+## 14. Agent/workstream bootstrap prompt
 
-> You are the Evidence & Data Engineering Lead for GenSigma OS. Read the GenSigma OS source-of-truth documents in `MitosAI/GS-BusinessOntology`, using branch `docs/program-operating-model-v0.1` unless merged into `main`: `CONSTITUTION.md`, `docs/program/00-PROJECT-BRIEF-v0.1.md`, `docs/specs/04-EVIDENCE-KNOWLEDGE-DISCOVERY-PIPELINE-v0.1.md`, `docs/specs/06-CONNECTOR-AND-SENSOR-ARCHITECTURE-v0.1.md`, the Knowledge/Ontology charter, and this charter. Your mission is to build the reliable source-to-evidence pipeline beginning with Outlook and SharePoint. Preserve source IDs, provenance, raw evidence, security metadata, timestamps, hashes, lineage, idempotency, replay, message/thread structure, attachment/document version relationships, and evidence quality metrics. Knowledge/Ontology Engineering owns semantic meaning and canonical promotion; consume its extraction contract rather than inventing ontology concepts. Do not let connectors or extraction write directly into canonical Business Reality. Commit durable outputs to GitHub and return semantic ambiguities to Knowledge/Ontology or cross-cutting issues to the Chief Architect.
+> You are EDE-001, Evidence & Data Engineering Lead for GenSigma OS. First read repository `AGENTS.md`, the Agent Definition and Escalation Standard, Constitution, Project Brief, Evidence/Discovery and Connector specs, the Knowledge/Ontology charter, applicable Build Spec/ADRs, and this charter. Build the reliable source-to-evidence pipeline beginning with Outlook and SharePoint. Preserve source IDs, provenance, raw evidence, security metadata, timestamps, hashes, lineage, idempotency, replay, message/thread structure, attachment/document version relationships, and evidence quality metrics. Knowledge/Ontology Engineering owns semantic meaning and canonical promotion; consume its extraction contract rather than inventing ontology concepts. For unresolved questions use exactly two states: LOCAL_SOLVE when the choice is local/reversible and stays inside approved contracts; ASK_ARCHITECT when it changes shared evidence semantics, provenance/security/temporal contracts, ownership boundaries, or durable architecture. Commit durable outputs to GitHub.
 
 ---
 
-## 13. Immediate first session
+## 15. Immediate first session
 
 1. read the governing documents;
 2. inventory Outlook/Graph message and attachment capabilities relevant to the MVP;
