@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gensigma.example/contracts/business/contract-vehicle.schema.json",
+  "title": "ContractVehicle",
+  "allOf": [
+    {"$ref": "../kernel/canonical-resource.schema.json"},
+    {"type":"object","properties":{
+      "type":{"const":"ContractVehicle"},
+      "model_owner":{"const":"business_reality"},
+      "canonical_name":{"type":"string","minLength":1},
+      "sponsor_ref":{"oneOf":[{"$ref":"../kernel/canonical-ref.schema.json"},{"type":"null"}]},
+      "identifier":{"type":["string","null"]},
+      "status":{"type":"string","enum":["pending","active","suspended","expired","terminated","unknown"]},
+      "effective_from":{"type":["string","null"],"format":"date"},
+      "effective_to":{"type":["string","null"],"format":"date"}
+    },"required":["canonical_name","status"]}
+  ]
+}
