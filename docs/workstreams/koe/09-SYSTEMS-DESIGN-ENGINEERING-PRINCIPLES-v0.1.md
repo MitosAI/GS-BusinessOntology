@@ -1,6 +1,6 @@
 # GenSigma Systems Design Truths
 
-**Version:** v0.2  
+**Version:** v0.3  
 **Status:** Active KOE design doctrine  
 **Owner:** Knowledge & Ontology Engineering (KOE-001)
 
@@ -82,7 +82,7 @@ Examples:
 - Executive Judgment reasons over governed inputs; it does not redefine them;
 - agents act only through governed action contracts;
 - contextual role is distinct from canonical identity;
-- Business Intent, Business Reality, External Reality, and Capability remain distinct models even when linked.
+- Business Intent, Business Reality, External World Model, and Capability remain distinct models even when linked.
 
 **Invariant:** if two implementations can satisfy an interface while assigning materially different business meaning, the boundary is not specified well enough.
 
@@ -102,17 +102,20 @@ We do not maintain a long independent list of architectural virtues. The normal 
 
 When two qualities conflict, the four truths are the tie-breaker.
 
+The earlier long-form quality/pillar checklist is not governing doctrine. It may be used diagnostically, but it must not compete with these four truths as independent architectural laws.
+
 ---
 
-## 4. Consequences for Build Spec 001
+## 4. Consequences for the Semantic Foundation and BUILD SPEC 001
 
-Build Spec 001 is the **Business Reality Semantic Foundation**, not an SFO/CRI application and not a narrow pilot ontology.
+ADR-002 governs the scope split:
 
-It must define the enterprise-wide foundations needed to support approximately 30–40 V1 business objects across major operating domains.
+- **Business Reality Semantic Foundation** is the broad enterprise compatibility envelope. It remains enterprise-oriented and may define approximately 30–40 candidate V1 semantic objects across multiple operating domains.
+- **BUILD SPEC 001** is the Chief Architect-owned narrow first executable vertical slice. It selects only the minimum coherent subset needed for the chosen episode plus the shared correctness, identity, evidence/provenance, time, security, and correction invariants.
 
-The first implementation may be incremental, but the specification must not be architected around a single customer, RFP, project, source system, or fixture.
+The first implementation must be incremental, but the pilot must not redefine the enterprise semantic foundation. Conversely, the broad foundation must not force all candidate objects into the first runtime.
 
-Validation must use multiple materially different business scenarios.
+Validation of the broad foundation uses multiple materially different business scenarios; BUILD SPEC 001 uses a bounded representative slice and architectural fitness tests.
 
 ---
 
