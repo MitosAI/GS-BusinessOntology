@@ -1,6 +1,6 @@
 # Codex Build 001 Brief — Executable Semantic Contract
 
-**Version:** v0.1  
+**Version:** v0.2  
 **Status:** Ready for Codex execution  
 **Owner:** Knowledge & Ontology Engineering (KOE-001)
 
@@ -22,10 +22,14 @@ Read first, in order:
 2. `docs/workstreams/koe/09-SYSTEMS-DESIGN-ENGINEERING-PRINCIPLES-v0.1.md`
 3. `docs/workstreams/koe/10-BUILD-SPEC-001-BUSINESS-REALITY-SEMANTIC-FOUNDATION-v0.1.md`
 4. `docs/workstreams/koe/09-BUSINESS-REALITY-V1-OBJECT-CATALOG-v0.1.md`
-5. `docs/workstreams/koe/11-SEMANTIC-KERNEL-ACCEPTANCE-SPEC-v0.1.md`
-6. `docs/workstreams/koe/03-EVIDENCE-DATA-EXTRACTION-CONTRACT-v0.1.md`
-7. `docs/workstreams/koe/04-CANONICAL-PROMOTION-MATRIX-v0.1.md`
-8. `docs/workstreams/koe/02-QUERY-AND-WORKLOAD-CONTRACT-v0.1.md`
+5. `docs/workstreams/koe/13-V1-BUSINESS-OBJECT-DEFINITIONS-v0.1.md`
+6. `docs/workstreams/koe/14-TYPED-RELATIONSHIP-AND-ROLE-CATALOG-v0.1.md`
+7. `docs/workstreams/koe/15-MODEL-OWNERSHIP-AND-BOUNDARY-MAP-v0.1.md`
+8. `docs/workstreams/koe/16-CORE-RESOURCE-ENVELOPE-AND-VERSIONING-v0.1.md`
+9. `docs/workstreams/koe/11-SEMANTIC-KERNEL-ACCEPTANCE-SPEC-v0.1.md`
+10. `docs/workstreams/koe/03-EVIDENCE-DATA-EXTRACTION-CONTRACT-v0.1.md`
+11. `docs/workstreams/koe/04-CANONICAL-PROMOTION-MATRIX-v0.1.md`
+12. `docs/workstreams/koe/02-QUERY-AND-WORKLOAD-CONTRACT-v0.1.md`
 
 If documents conflict, the newer KOE semantic-foundation documents control within KOE scope and the conflict must be reported in the PR.
 
@@ -40,14 +44,18 @@ Recommended shape:
 ```text
 contracts/
   README.md
+  OPEN-SEMANTIC-QUESTIONS.md
   schemas/
     kernel/
       canonical-resource.schema.json
-      temporal-state.schema.json
+      canonical-ref.schema.json
+      effective-time.schema.json
       epistemic-status.schema.json
       provenance.schema.json
+      source-mapping.schema.json
       security-context.schema.json
       audit-correction.schema.json
+      alias.schema.json
       typed-relationship.schema.json
       event.schema.json
       assessment.schema.json
@@ -56,38 +64,7 @@ contracts/
       action.schema.json
       outcome.schema.json
     business/
-      organization.schema.json
-      legal-entity.schema.json
-      organizational-unit.schema.json
-      person.schema.json
-      position.schema.json
-      place.schema.json
-      business-relationship.schema.json
-      opportunity.schema.json
-      solicitation.schema.json
-      offering.schema.json
-      proposal.schema.json
-      agreement.schema.json
-      obligation.schema.json
-      contract-vehicle.schema.json
-      project.schema.json
-      milestone.schema.json
-      deliverable.schema.json
-      budget.schema.json
-      invoice.schema.json
-      payment.schema.json
-      assignment.schema.json
-      capability.schema.json
-      skill.schema.json
-      credential.schema.json
-      certification.schema.json
-      asset.schema.json
-      system.schema.json
-      technology.schema.json
-      registration.schema.json
-      artifact.schema.json
-      claim.schema.json
-      risk.schema.json
+      <one schema per V1 candidate object>
   api/
     business-reality.openapi.yaml
   fixtures/
@@ -102,8 +79,6 @@ contracts/
     acceptance-manifest.yaml
 ```
 
-Exact filenames may vary for good reason, but the semantic coverage may not.
-
 Use JSON Schema Draft 2020-12 and OpenAPI 3.1 unless an existing repository convention supersedes them. These are contract formats, not production runtime choices.
 
 ---
@@ -112,15 +87,16 @@ Use JSON Schema Draft 2020-12 and OpenAPI 3.1 unless an existing repository conv
 
 The package must make these concepts explicit and reusable rather than redefined independently by every business schema:
 
-- canonical ID and object type/version;
+- canonical ID and semantic type/version;
+- cross-model canonical references and model ownership;
 - aliases/source mappings;
 - effective/source/recorded/discovered time;
 - epistemic status;
 - evidence/provenance reference;
 - security classification/context hooks;
 - audit metadata;
-- supersession/correction reference;
-- typed relationship identity, participants, roles, scope, time, evidence, state;
+- supersession/correction lineage;
+- typed relationship identity, participants, contextual roles, scope, time, evidence, state;
 - Event / Assessment / Decision / Approval / Action / Outcome distinctions.
 
 Do not encode physical database keys, indexes, graph labels, SQL constraints, or vendor-specific storage behavior into the semantic contract.
@@ -129,9 +105,11 @@ Do not encode physical database keys, indexes, graph labels, SQL constraints, or
 
 ## 5. Business schemas
 
-Represent all 38 candidate V1 business objects at contract level.
+Represent all current V1 candidate object types at contract level using the definitions in `13-V1-BUSINESS-OBJECT-DEFINITIONS-v0.1.md`.
 
-The schemas may be intentionally thin where admission questions remain open. In that case:
+Every schema must compose the common kernel envelope. Do not duplicate or redefine canonical identity, time, provenance, security, correction, alias, or source-mapping semantics inside domain schemas.
+
+Schemas may be intentionally thin where admission questions remain open. In that case:
 
 - preserve common kernel behavior;
 - mark unresolved domain-specific fields clearly;
@@ -141,7 +119,29 @@ A thin correct schema is preferable to a detailed invented schema.
 
 ---
 
-## 6. API contract
+## 6. Relationship contracts
+
+Implement the semantic coverage in `14-TYPED-RELATIONSHIP-AND-ROLE-CATALOG-v0.1.md`.
+
+A typed relationship must support:
+
+- stable relationship identity where independently significant;
+- participant references;
+- contextual participant roles;
+- relationship type/family;
+- scope;
+- lifecycle state;
+- effective time;
+- provenance;
+- epistemic status;
+- security;
+- correction/supersession.
+
+Customer, Partner, Vendor, Employee, Contractor, Candidate, Stakeholder, Approver, and similar roles must not become duplicate Person/Organization identity classes.
+
+---
+
+## 7. API contract
 
 Define technology-neutral request/response shapes for at least:
 
@@ -168,11 +168,11 @@ reject candidate
 correct canonical interpretation
 ```
 
-Ambiguity, unknown, unresolved, forbidden, conflict, superseded, and not-found outcomes must be explicit rather than collapsed into generic null/500 behavior.
+Ambiguity, unknown, unresolved, forbidden, conflict, superseded, contract-version mismatch, and not-found outcomes must be explicit rather than collapsed into generic null/500 behavior.
 
 ---
 
-## 7. Fixture requirements
+## 8. Fixture requirements
 
 Create synthetic fixtures spanning all six validation families:
 
@@ -183,7 +183,7 @@ Create synthetic fixtures spanning all six validation families:
 5. vendor/technology lifecycle;
 6. financial execution.
 
-Fixtures must include positive cases and difficult cases:
+Fixtures must include positive and difficult cases:
 
 - aliases;
 - same-name distinct identities;
@@ -195,13 +195,14 @@ Fixtures must include positive cases and difficult cases:
 - merge/split;
 - restricted evidence;
 - Event vs Decision vs Approval vs Action vs Outcome;
-- cross-domain linkage.
+- cross-domain linkage;
+- cross-model canonical reference.
 
-Do not make SFO/CRI the only or dominant fixture.
+No one customer or opportunity may dominate fixture design.
 
 ---
 
-## 8. Acceptance manifest
+## 9. Acceptance manifest
 
 Map every T01–T31 requirement from `11-SEMANTIC-KERNEL-ACCEPTANCE-SPEC-v0.1.md` to one or more fixture/assertion definitions.
 
@@ -211,7 +212,7 @@ If full executable validation would require choosing a runtime, stop at a determ
 
 ---
 
-## 9. Prohibited implementation choices
+## 10. Prohibited implementation choices
 
 Build 001 must not:
 
@@ -227,13 +228,14 @@ Build 001 must not:
 - make LLM/model output canonical by default;
 - collapse Event, Decision, Approval, Action, and Outcome;
 - make corrections destructive;
-- encode SFO/CRI-specific classes.
+- create customer-specific ontology classes;
+- fork the semantics of a concept owned by another model.
 
 ---
 
-## 10. Architecture escalation rule
+## 11. Architecture escalation rule
 
-If Codex encounters a question that changes business meaning, identity semantics, evidence authority, time semantics, security/authority, correction behavior, or object boundaries:
+If Codex encounters a question that changes business meaning, identity semantics, evidence authority, time semantics, security/authority, correction behavior, model ownership, or object boundaries:
 
 **do not choose silently.**
 
@@ -255,16 +257,18 @@ Continue all non-blocked work.
 
 ---
 
-## 11. Completion condition
+## 12. Completion condition
 
 Build 001 is complete when:
 
 - the semantic kernel is machine-readable;
-- all 38 candidate object types can compose the kernel contracts;
+- all current V1 candidate object types compose the common kernel contracts;
+- relationship/role semantics are machine-readable;
+- cross-model ownership/reference is explicit;
 - the logical API surface is machine-readable;
 - all six domain families have representative fixtures;
 - T01–T31 are mapped to assertions;
 - no production technology choice has been smuggled into semantic contracts;
 - semantic ambiguities are surfaced explicitly.
 
-The next build can then implement a reference/runtime Business Reality service against these contracts after Platform Engineering establishes the appropriate implementation architecture.
+The next build can then implement a reference/runtime Business Reality service after Platform Engineering establishes the appropriate implementation architecture.
