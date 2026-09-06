@@ -1,0 +1,74 @@
+fixture_id: commercial
+version: 0.1.0
+purpose: exercise opportunity, solicitation, partner role, proposal, agreement, evidence, judgment, and action distinctions
+
+resources:
+  - {id: org_gensigma, type: Organization, canonical_name: GenSigma}
+  - {id: org_customer, type: Organization, canonical_name: Metro Airport Authority}
+  - {id: org_partner, type: Organization, canonical_name: Northstar Consulting}
+  - {id: opp_001, type: Opportunity, canonical_name: Service Management Modernization}
+  - {id: sol_001, type: Solicitation, canonical_name: RFP-2026-101}
+  - {id: prop_001, type: Proposal, canonical_name: GenSigma Response v1}
+  - {id: agr_001, type: Agreement, canonical_name: Mutual NDA}
+  - {id: claim_001, type: Claim, proposition: Northstar is the selected teaming partner}
+
+relationships:
+  - type: opportunity_for
+    from: opp_001
+    to: org_customer
+  - type: responds_to
+    from: opp_001
+    to: sol_001
+  - type: partner_in
+    from: org_partner
+    to: opp_001
+    scope: opp_001
+    expected_non_implication: enterprise_wide_partner
+
+truth_and_correction:
+  - evidence_id: email_original
+    origin_id: origin_partner_selection
+    supports: claim_001
+  - evidence_id: email_forward
+    origin_id: origin_partner_selection
+    supports: claim_001
+    expected_independence: false
+  - historical_state:
+      at: 2026-08-01T00:00:00Z
+      opportunity_stage: pursuing
+  - later_state:
+      at: 2026-08-15T00:00:00Z
+      opportunity_stage: submitted
+
+cognition_chain:
+  assessment: assess_partner_fit
+  decision: select_partner
+  approval: approve_partner
+  action: send_teaming_agreement
+  outcome: agreement_executed
+  requirement: all remain query_distinguishable
+
+security_case:
+  restricted_evidence: internal_pricing_email
+  canonical_projection: proposal_submitted
+  permitted_projection_without_evidence: true
+
+expected_assertions:
+  - T01
+  - T02
+  - T03
+  - T06
+  - T07
+  - T11
+  - T13
+  - T14
+  - T15
+  - T16
+  - T18
+  - T19
+  - T21
+  - T23
+  - T24
+  - T25
+  - T26
+  - T27
