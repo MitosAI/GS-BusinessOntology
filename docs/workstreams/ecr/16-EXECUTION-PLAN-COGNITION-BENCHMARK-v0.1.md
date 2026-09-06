@@ -3,14 +3,15 @@
 **Status:** READY  
 **Owner workstream:** ECR-001 — Executive Cognition Research  
 **Design basis:** R001-13 benchmark harness + R001-15 benchmark-practice validation  
-**Architecture dependency:** `ADRQ-ECR-001` blocks only the modular routed-cognition arm.
+**Architecture basis:** `docs/adr/ADR-003-EXECUTIVE-COGNITION-WORKING-ARCHITECTURE.md` — `ADRQ-ECR-001` resolved `DECIDED`.
 
 ## Goal
 
-Build a reproducible evaluation harness that can compare executive-cognition approaches on identical frozen business decision cases without hindsight leakage, and produce evidence strong enough to keep, modify, or reject the candidate cognition architecture.
+Build a reproducible evaluation harness that can compare executive-cognition approaches on identical frozen business decision cases without hindsight leakage, and produce evidence strong enough to keep, modify, or reject the accepted working cognition architecture.
 
 ## Governing design / research
 
+- `docs/adr/ADR-003-EXECUTIVE-COGNITION-WORKING-ARCHITECTURE.md`
 - `docs/workstreams/ecr/13-R001-COGNITION-BENCHMARK-HARNESS-v0.1.md`
 - `docs/workstreams/ecr/15-R001-BENCHMARK-PRACTICE-VALIDATION-v0.1.md`
 - `docs/workstreams/ecr/14-R001-F-FINAL-SYNTHESIS-AND-DECISION-ENGINE-PATCH-PROPOSAL-v0.1.md`
@@ -31,7 +32,8 @@ Build a reproducible evaluation harness that can compare executive-cognition app
 9. Blind human-review packet generator.
 10. Per-case and aggregate benchmark report generator.
 11. Synthetic/test fixture pack proving the harness end to end.
-12. Modular routed-cognition evaluation arm after `ADRQ-ECR-001` is resolved.
+12. Historical Bid/No-Bid case pack assembled with Evidence/Data cooperation.
+13. Modular routed-cognition evaluation arm implementing the working Hierarchical Policy Portfolio for benchmark purposes.
 
 ## Work breakdown
 
@@ -61,7 +63,7 @@ Implement a stable arm interface and:
 - LLM-only baseline;
 - static weighted-scorecard baseline.
 
-The interface must permit later addition of the modular routed arm without changing benchmark case semantics.
+The interface must permit the modular routed arm without changing benchmark case semantics.
 
 ### T4 — Scoring engine
 
@@ -100,9 +102,9 @@ After the harness works on synthetic fixtures, assemble 10–20 historical Bid/N
 
 ### T9 — Modular routed cognition arm
 
-`BLOCKED_BY_ARCH_REQUEST: ADRQ-ECR-001`
+**READY under ADR-003.**
 
-Implement only after the Chief Architect approves/modifies the working Decision Engine architecture.
+Implement the benchmark arm for the accepted working **Hierarchical Policy Portfolio** architecture. It must expose explicit method routing, deterministic gates, provenance of selected methods, uncertainty handling, sensitivity/reversal conditions, and governed authority checks where the benchmark fixture supplies them. It remains an evaluation implementation, not a production Decision Engine or a new canonical semantic system.
 
 ## Dependency graph
 
@@ -118,7 +120,7 @@ T1
 +-------+--> T7
             |
             +--> T8
-            +--> T9  [blocked by ADRQ-ECR-001]
+            +--> T9
 ```
 
 ## Parallelizable tasks
@@ -126,6 +128,8 @@ T1
 After T1 stabilizes, T2–T6 can proceed substantially in parallel.
 
 T8 may begin with case-discovery metadata while T2–T7 are implemented, but no historical fixture is considered valid until the frozen-case schema and leakage checks exist.
+
+T9 may begin once T1/T3 interfaces are stable enough for an additional evaluation arm; it is no longer architecture-blocked because ADR-003 accepted the working architecture subject to M11 validation.
 
 ## Acceptance suite
 
@@ -135,11 +139,13 @@ T8 may begin with case-discovery metadata while T2–T7 are implemented, but no 
 - [ ] Every run records arm/model/tool/configuration versions and timestamps.
 - [ ] Non-deterministic arms can be run repeatedly without overwriting previous results.
 - [ ] LLM-only and static-scorecard baselines execute end to end on synthetic fixtures.
+- [ ] Modular routed arm executes end to end and records method-routing provenance.
+- [ ] Modular routed arm handles weak/missing probability evidence without fabricating numeric probability.
 - [ ] Brier score is tested against known examples.
 - [ ] Human-review packets can be blinded/randomized and later reconciled to arm IDs.
 - [ ] Reports preserve per-case results and do not hide failures behind a single aggregate score.
 - [ ] Benchmark-local contracts do not modify canonical ontology or Decision Engine semantics.
-- [ ] CI tests pass for core contracts, leakage guards, scoring, and report generation.
+- [ ] CI tests pass for core contracts, leakage guards, scoring, arms, and report generation.
 
 ## Risks / unknowns
 
@@ -148,18 +154,19 @@ T8 may begin with case-discovery metadata while T2–T7 are implemented, but no 
 3. Too few cases may make calibration statistics misleading; raw forecast records should exist before aggregate calibration claims.
 4. LLM model changes can alter baseline results; exact model/configuration versions must be preserved.
 5. Cost/latency comparisons depend on runtime/tool instrumentation and may evolve.
+6. The working Hierarchical Policy Portfolio may add complexity without measurable decision-quality benefit; ADR-003 explicitly requires M11 to test this and permits revisiting the architecture.
 
 ## Explicitly out of scope
 
 - selecting production database/platform architecture;
-- changing canonical ontology schemas;
-- approving Decision Engine shared semantics;
+- inventing new canonical ontology schemas;
+- selecting a permanent model vendor or agent framework;
 - production autonomous decisions;
 - using realized outcome as the sole measure of decision quality;
-- building the modular routed cognition arm before architecture resolution.
+- treating benchmark-local `DecisionCase` as a canonical business object without separate semantic admission.
 
 ## Architecture questions
 
-Open: `ADRQ-ECR-001` — working Decision Engine architecture and shared cognition semantics.
+`ADRQ-ECR-001` is **RESOLVED — DECIDED** by `docs/adr/ADR-003-EXECUTIVE-COGNITION-WORKING-ARCHITECTURE.md`.
 
-This does **not** block T1–T8.
+No open architecture question currently blocks T1–T9. Any implementation discovery that requires new shared semantics, authority/security changes, canonical object admission, or a hard-to-reverse runtime/platform choice must use `ASK_ARCHITECT`.
