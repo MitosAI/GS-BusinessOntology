@@ -4,7 +4,14 @@ import copy
 
 import pytest
 
-from gensigma_br import BusinessRealityKernel, ContractViolation, EvidenceConflict, UnknownEvidence
+from gensigma_br import (
+    BusinessRealityKernel,
+    CandidateSemanticTypeMismatch,
+    ContractViolation,
+    EvidenceConflict,
+    UnknownEvidence,
+    UnknownSemanticType,
+)
 
 
 NOW = "2026-09-06T00:00:00Z"
@@ -135,6 +142,45 @@ def test_canonical_promotion_preserves_evidence_lineage() -> None:
     assert record.candidate_id == "cand-org-001"
     assert record.evidence_ids == ("ev-001",)
     assert kernel.get_object("org-sfo")["canonical_name"] == "San Francisco International Airport"
+
+
+def test_candidate_semantic_type_mismatch_is_rejected_before_promotion() -> None:
+    kernel = BusinessRealityKernel()
+    kernel.append_raw_evidence(raw_evidence())
+    kernel.propose_candidate(candidate())
+
+    mismatched = organization()
+    mismatched["type"] = "Agreement"
+
+    with pytest.raises(CandidateSemanticTypeMismatch, match="proposes 'Organization'"):
+        kernel.promote_candidate(
+            "cand-org-001",
+            mismatched,
+            actor="ca-test",
+            reason="Should fail semantic type compatibility",
+        )
+
+
+@pytest.mark.parametrize(
+    ("semantic_type", "expected_path"),
+    [
+        ("Event", "schemas/kernel/event.schema.json"),
+        ("Decision", "schemas/kernel/decision.schema.json"),
+        ("Action", "schemas/kernel/action.schema.json"),
+        ("Outcome", "schemas/kernel/outcome.schema.json"),
+    ],
+)
+def test_kernel_canonical_semantic_types_resolve_without_moving_contracts(
+    semantic_type: str, expected_path: str
+) -> None:
+    kernel = BusinessRealityKernel()
+    assert kernel.contracts.semantic_schema_path(semantic_type) == expected_path
+
+
+def test_unknown_semantic_type_fails_clearly() -> None:
+    kernel = BusinessRealityKernel()
+    with pytest.raises(UnknownSemanticType, match="No promotable semantic contract"):
+        kernel.contracts.semantic_schema_path("ImaginaryType")
 
 
 def test_wrong_business_shape_is_rejected_by_contract() -> None:
