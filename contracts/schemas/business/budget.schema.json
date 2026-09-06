@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gensigma.example/contracts/business/budget.schema.json",
+  "title": "Budget",
+  "allOf": [
+    {"$ref": "../kernel/canonical-resource.schema.json"},
+    {"type":"object","properties":{
+      "type":{"const":"Budget"},
+      "model_owner":{"const":"business_reality"},
+      "canonical_name":{"type":"string","minLength":1},
+      "scope_ref":{"$ref":"../kernel/canonical-ref.schema.json"},
+      "amount":{"type":["number","null"]},
+      "currency":{"type":["string","null"],"minLength":3,"maxLength":3},
+      "period_start":{"type":["string","null"],"format":"date"},
+      "period_end":{"type":["string","null"],"format":"date"},
+      "status":{"type":"string","enum":["draft","approved","active","revised","closed","cancelled","unknown"]}
+    },"required":["canonical_name","scope_ref","status"]}
+  ]
+}
