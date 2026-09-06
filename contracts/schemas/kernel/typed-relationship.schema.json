@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gensigma.example/contracts/kernel/typed-relationship.schema.json",
+  "title": "Typed Relationship",
+  "allOf": [
+    {"$ref": "./canonical-resource.schema.json"},
+    {
+      "type": "object",
+      "properties": {
+        "relationship_family": {"type": "string", "minLength": 1},
+        "relationship_type": {"type": "string", "minLength": 1},
+        "participants": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "party_ref": {"$ref": "./canonical-ref.schema.json"},
+              "contextual_role": {"type": "string", "minLength": 1},
+              "role_qualifier": {"type": ["string", "null"]}
+            },
+            "required": ["party_ref", "contextual_role"]
+          }
+        },
+        "scope_refs": {
+          "type": "array",
+          "items": {"$ref": "./canonical-ref.schema.json"}
+        },
+        "relationship_state": {
+          "type": "string",
+          "enum": [
+            "proposed",
+            "active",
+            "suspended",
+            "terminated",
+            "expired",
+            "superseded",
+            "unresolved"
+          ]
+        }
+      },
+      "required": [
+        "relationship_family",
+        "relationship_type",
+        "participants",
+        "scope_refs",
+        "relationship_state"
+      ]
+    }
+  ]
+}
