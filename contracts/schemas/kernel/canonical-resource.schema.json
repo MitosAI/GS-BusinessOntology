@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gensigma.example/contracts/kernel/canonical-resource.schema.json",
+  "title": "Canonical Resource",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "id": {"type": "string", "minLength": 1},
+    "type": {"type": "string", "minLength": 1},
+    "model_owner": {
+      "type": "string",
+      "enum": [
+        "business_intent",
+        "business_reality",
+        "external_reality",
+        "capability",
+        "executive_judgment",
+        "governed_action",
+        "outcome_learning",
+        "shared_kernel"
+      ]
+    },
+    "contract_version": {"type": "string", "minLength": 1},
+    "display_name": {"type": ["string", "null"]},
+    "lifecycle_state": {"type": ["string", "null"]},
+    "effective_time": {"$ref": "./effective-time.schema.json"},
+    "source_time": {"type": ["string", "null"], "format": "date-time"},
+    "recorded_at": {"type": "string", "format": "date-time"},
+    "discovered_at": {"type": ["string", "null"], "format": "date-time"},
+    "epistemic_status": {"$ref": "./epistemic-status.schema.json"},
+    "provenance_refs": {
+      "type": "array",
+      "items": {"$ref": "./provenance.schema.json"}
+    },
+    "security": {"$ref": "./security-descriptor.schema.json"},
+    "source_mappings": {
+      "type": "array",
+      "items": {"$ref": "./source-mapping.schema.json"}
+    },
+    "aliases": {
+      "type": "array",
+      "items": {"$ref": "./alias.schema.json"}
+    },
+    "audit": {"$ref": "./audit-correction.schema.json"},
+    "extensions": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "required": [
+    "id",
+    "type",
+    "model_owner",
+    "contract_version",
+    "effective_time",
+    "recorded_at",
+    "epistemic_status",
+    "provenance_refs",
+    "security",
+    "source_mappings",
+    "aliases",
+    "audit"
+  ]
+}
