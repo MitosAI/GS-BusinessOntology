@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gensigma.example/contracts/kernel/alias.schema.json",
+  "title": "Alias",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "value": {"type": "string", "minLength": 1},
+    "alias_type": {
+      "type": "string",
+      "enum": [
+        "legal_name",
+        "trade_name",
+        "historical_name",
+        "acronym",
+        "source_label",
+        "contextual_shorthand",
+        "email_domain",
+        "identifier"
+      ]
+    },
+    "scope_ref": {
+      "oneOf": [
+        {"$ref": "./canonical-ref.schema.json"},
+        {"type": "null"}
+      ]
+    },
+    "valid_from": {"type": ["string", "null"], "format": "date-time"},
+    "valid_to": {"type": ["string", "null"], "format": "date-time"},
+    "source_or_evidence_ref": {
+      "oneOf": [
+        {"$ref": "./canonical-ref.schema.json"},
+        {"type": "null"}
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": ["proposed", "accepted", "rejected", "superseded", "ambiguous"]
+    }
+  },
+  "required": ["value", "alias_type", "status"]
+}
