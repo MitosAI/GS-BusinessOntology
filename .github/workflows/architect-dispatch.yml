@@ -1,0 +1,86 @@
+name: Chief Architect Dispatch
+
+on:
+  issues:
+    types: [opened, labeled]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: "Architecture Decision Request issue number"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  dispatch:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'issues' &&
+       (contains(github.event.issue.labels.*.name, 'needs-architect') ||
+        contains(github.event.issue.labels.*.name, 'ask-architect')))
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out canonical repository state
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install architect runtime
+        run: pip install openai-agents pydantic
+
+      - name: Resolve issue number
+        id: issue
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "number=${{ inputs.issue_number }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "number=${{ github.event.issue.number }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run CA-001 against the architecture request
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ARCHITECT_MODEL: ${{ vars.ARCHITECT_MODEL || 'gpt-5.6-sol' }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          ISSUE_NUMBER: ${{ steps.issue.outputs.number }}
+        run: python tools/architect_dispatch.py
+
+      - name: Publish Chief Architect response
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          ISSUE_NUMBER: ${{ steps.issue.outputs.number }}
+        shell: bash
+        run: |
+          gh issue comment "$ISSUE_NUMBER" --repo "$GH_REPO" --body-file architect_response.md
+
+      - name: Update request labels
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          ISSUE_NUMBER: ${{ steps.issue.outputs.number }}
+        shell: bash
+        run: |
+          STATUS=$(python - <<'PY'
+          import json
+          with open('architect_decision.json', 'r', encoding='utf-8') as f:
+              status = json.load(f)['status'].lower().replace('_', '-')
+          print('architect-' + status)
+          PY
+          )
+          gh label create "$STATUS" --repo "$GH_REPO" --color "6f42c1" --description "Chief Architect disposition" --force
+          gh issue edit "$ISSUE_NUMBER" --repo "$GH_REPO" --add-label "$STATUS"
+          gh issue edit "$ISSUE_NUMBER" --repo "$GH_REPO" --remove-label "needs-architect" || true
+          gh issue edit "$ISSUE_NUMBER" --repo "$GH_REPO" --remove-label "ask-architect" || true

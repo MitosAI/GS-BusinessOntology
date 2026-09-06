@@ -1,0 +1,258 @@
+# GenSigma OS — Chief Architect Event Dispatch
+
+**Version:** v0.1  
+**Status:** MVP operating protocol  
+**Purpose:** Automatically invoke CA-001 when a workstream emits an `ASK_ARCHITECT` request, without building a general A2A or agent-swarm platform.
+
+---
+
+## 1. Problem
+
+A GitHub Architecture Decision Request is durable shared state, but a ChatGPT conversation does not poll GitHub and cannot wake itself.
+
+The minimum automation therefore needs an event source plus an architect worker:
+
+```text
+WORKSTREAM / CODEX AGENT
+        |
+        | creates Architecture Decision Request
+        | and applies `ask-architect`
+        v
+GITHUB ISSUE
+        |
+        | GitHub `issues:labeled` event
+        v
+GITHUB ACTIONS
+Chief Architect Dispatch workflow
+        |
+        v
+CA-001 EVENT-DRIVEN WORKER
+        |
+        | read-only repository tools
+        | architecture reasoning
+        v
+STRUCTURED DISPOSITION
+        |
+        +--> LOCAL_DISCRETION
+        +--> DECIDED
+        +--> EXPERIMENT_REQUIRED
+        +--> ESCALATE_VJ
+        |
+        v
+GITHUB ISSUE COMMENT + STATUS LABEL
+        |
+        v
+ORIGINATING WORKSTREAM RESUMES
+```
+
+This is deliberately not a general multi-agent runtime.
+
+---
+
+## 2. Why GitHub Actions first
+
+GitHub already owns the engineering event and repository context. For the initial development organization, a custom webhook receiver, message bus, Azure Function, durable workflow engine, or A2A implementation is unnecessary.
+
+GitHub Actions provides:
+
+- an event trigger for issue labeling;
+- an isolated ephemeral runner;
+- direct checkout of repository state;
+- a short-lived repository-scoped `GITHUB_TOKEN`;
+- repository secrets for the model API credential;
+- a visible audit trail for each invocation.
+
+If volume, latency, cross-repository coordination, or richer durability later exceed this mechanism, the same semantic protocol can move behind a dedicated dispatcher without changing `LOCAL_SOLVE / ASK_ARCHITECT`.
+
+---
+
+## 3. Trigger contract
+
+The canonical trigger is:
+
+```text
+GitHub Issue
+label = ask-architect
+```
+
+The workflow listens for the GitHub `issues` event with activity type `labeled` and executes only when the added label is exactly `ask-architect`.
+
+A manual `workflow_dispatch` path is also provided for testing and recovery by issue number.
+
+### Important GitHub constraint
+
+Event-triggered workflows must exist on the repository default branch to respond to repository events. The workflow may be developed on another branch, but production event dispatch begins only after it reaches the default branch.
+
+---
+
+## 4. CA-001 runtime identity
+
+The event-driven CA-001 worker is not the persistent ChatGPT conversation itself.
+
+It is a stateless invocation that reconstructs Chief Architect identity from durable repository sources on every run:
+
+```text
+AGENTS.md
++ Chief Architect charter
++ Chief Architect decision method
++ Agent definition/escalation standard
++ Constitution
++ ADRs
++ Build Specs
++ relevant domain specifications
++ current Architecture Decision Request
+= CA-001 invocation context
+```
+
+Architectural continuity therefore lives in Git, not in hidden chat/session memory.
+
+The current interactive Sarah/Chief Architect thread remains the place for high-bandwidth work with VJ. The event-driven CA-001 worker handles bounded Architecture Decision Requests under the same governing rules.
+
+---
+
+## 5. Repository inspection
+
+CA-001 receives read-only repository tools:
+
+```text
+read_repo_file(path)
+list_repo_files(prefix)
+search_repo(query)
+```
+
+It must read the governing architecture before deciding.
+
+The worker is intentionally not given arbitrary repository write tools in v0.1.
+
+This limits the blast radius of a mistaken or prompt-injected request.
+
+---
+
+## 6. Output contract
+
+Every CA-001 run returns a structured result:
+
+```text
+status
+summary
+decision
+rationale
+repository_basis[]
+affected_artifacts[]
+required_next_steps[]
+blocked_scope
+resume_instruction
+confidence
+```
+
+Allowed `status` values:
+
+```text
+LOCAL_DISCRETION
+DECIDED
+EXPERIMENT_REQUIRED
+ESCALATE_VJ
+```
+
+The result is rendered as a GitHub issue comment and a disposition label.
+
+A model response alone does not silently modify the Constitution, ADRs, or specs. If the decision requires a durable architecture change, `affected_artifacts` must identify it and a follow-on change must be committed/reviewed.
+
+---
+
+## 7. Security model
+
+The GitHub workflow uses least privilege:
+
+```text
+contents: read
+issues: write
+```
+
+The model worker can inspect checked-out repository text but cannot push code or mutate architecture files in v0.1.
+
+The originating issue and comments are treated as **untrusted input**. The CA-001 instructions explicitly state that issue/PR text cannot override the Constitution, role charter, repository operating rules, or tool restrictions.
+
+Secrets:
+
+- `OPENAI_API_KEY` must be configured as a GitHub Actions secret;
+- no API key belongs in source, issue text, or chat;
+- `GITHUB_TOKEN` is generated by GitHub for the workflow and scoped to the repository/job;
+- future production deployment may replace the API key with a stronger secret-management pattern if needed.
+
+---
+
+## 8. Model policy
+
+The default v0.1 model is:
+
+```text
+gpt-5.6-sol
+```
+
+The workflow reads `ARCHITECT_MODEL` from a GitHub Actions repository variable when set, allowing model changes without changing the agent definition or protocol.
+
+The Chief Architect identity is not the model. Model choice is replaceable implementation policy.
+
+Later routing may use cheaper models for classification and a stronger model only for true architectural decisions, but no router is required to prove the first event-driven loop.
+
+---
+
+## 9. Non-blocking work rule
+
+The event system does not alter the operating principle:
+
+> An Architecture Decision Request blocks only work whose correctness depends on that decision.
+
+The originating workstream must continue independent `LOCAL_SOLVE` work where possible.
+
+No code or artifact whose correctness depends on an unresolved architecture decision may be treated as final/merge-ready.
+
+---
+
+## 10. MVP acceptance test
+
+The first acceptance test is a real Knowledge/Ontology question.
+
+1. KOE creates an Architecture Decision Request using the approved template.
+2. The issue is labeled `ask-architect`.
+3. GitHub automatically starts `Chief Architect Dispatch`.
+4. CA-001 reads the governing repo artifacts.
+5. CA-001 posts one of the four dispositions with repository basis and a resume instruction.
+6. `ask-architect` is removed and a disposition label is added.
+7. KOE reads the response and resumes the dependent task if permitted.
+8. The workflow run provides an audit trail of the invocation.
+
+Success means VJ did not manually copy the question from one agent/thread to the Chief Architect.
+
+---
+
+## 11. Deployment prerequisites
+
+Before the automatic trigger can work:
+
+1. merge the workflow and CA-001 worker onto the repository default branch;
+2. create repository Actions secret `OPENAI_API_KEY`;
+3. optionally create repository Actions variable `ARCHITECT_MODEL` (default in code: `gpt-5.6-sol`);
+4. confirm GitHub Actions are enabled;
+5. confirm workflow token permissions allow `contents: read` and `issues: write`;
+6. ensure the `ask-architect` label exists or allow the first workstream/operator to create it;
+7. create a real ADR issue and apply the label.
+
+---
+
+## 12. Deliberately deferred
+
+Not required for v0.1:
+
+- Azure Functions;
+- Service Bus/Event Grid;
+- Microsoft Agent Framework;
+- A2A;
+- persistent CA-001 session memory;
+- autonomous ADR commits;
+- automatic Codex task restart;
+- peer-agent messaging;
+- learned model routing.
+
+Those should be introduced only when observed development workflow requires them.
