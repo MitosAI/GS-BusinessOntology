@@ -11,10 +11,11 @@ Every agent must begin by reading, in this order where relevant:
 1. `CONSTITUTION.md`
 2. `docs/program/00-PROJECT-BRIEF-v0.1.md`
 3. `docs/program/01-OPERATING-ARCHITECTURE-v0.1.md`
-4. `docs/program/05-CHIEF-ARCHITECT-DECISION-METHOD-v0.1.md`
-5. `docs/protocols/AGENT-DEFINITION-AND-ESCALATION-STANDARD-v0.1.md`
-6. the agent/workstream role charter under `docs/roles/`
-7. the relevant Build Spec, ADRs, protocols, and task/issue
+4. `docs/program/03A-WORKSTREAM-EXECUTION-UPDATE-v0.1.md`
+5. `docs/program/05-CHIEF-ARCHITECT-DECISION-METHOD-v0.1.md`
+6. `docs/protocols/AGENT-DEFINITION-AND-ESCALATION-STANDARD-v0.1.md`
+7. the agent/workstream role charter under `docs/roles/`
+8. the relevant Build Spec, ADRs, protocols, and task/issue
 
 GitHub is the durable engineering source of truth. Chat history is workshop context, not canonical architecture.
 
