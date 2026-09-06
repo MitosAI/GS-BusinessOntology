@@ -1,6 +1,22 @@
-version: 0.1.0
+version: 0.2.0
 spec: docs/workstreams/koe/11-SEMANTIC-KERNEL-ACCEPTANCE-SPEC-v0.1.md
-status: semantic-assertion-baseline
+status: concrete-fixture-baseline
+
+fixture_catalog:
+  identity: contracts/fixtures/identity/fixture.yaml
+  commercial: contracts/fixtures/commercial/fixture.yaml
+  delivery: contracts/fixtures/delivery/fixture.yaml
+  workforce: contracts/fixtures/workforce/fixture.yaml
+  compliance: contracts/fixtures/compliance/fixture.yaml
+  technology: contracts/fixtures/technology/fixture.yaml
+  finance: contracts/fixtures/finance/fixture.yaml
+  all:
+    - contracts/fixtures/commercial/fixture.yaml
+    - contracts/fixtures/delivery/fixture.yaml
+    - contracts/fixtures/workforce/fixture.yaml
+    - contracts/fixtures/compliance/fixture.yaml
+    - contracts/fixtures/technology/fixture.yaml
+    - contracts/fixtures/finance/fixture.yaml
 
 rules:
   - id: T01
@@ -136,4 +152,4 @@ rules:
     fixtures: [technology]
     assertion: Organization System Asset Technology and provider/vendor role remain distinct and traversable
 
-completion_rule: every rule must map to at least one concrete fixture assertion before Build 001 is complete
+completion_rule: every rule must map to at least one path in fixture_catalog before Build 001 is complete
