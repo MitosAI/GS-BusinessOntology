@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gensigma.example/contracts/business/milestone.schema.json",
+  "title": "Milestone",
+  "allOf": [
+    {"$ref": "../kernel/canonical-resource.schema.json"},
+    {"type":"object","properties":{
+      "type":{"const":"Milestone"},
+      "model_owner":{"const":"business_reality"},
+      "canonical_name":{"type":"string","minLength":1},
+      "project_ref":{"$ref":"../kernel/canonical-ref.schema.json"},
+      "target_date":{"type":["string","null"],"format":"date"},
+      "completed_at":{"type":["string","null"],"format":"date-time"},
+      "status":{"type":"string","enum":["planned","in_progress","completed","missed","cancelled","unknown"]}
+    },"required":["canonical_name","project_ref","status"]}
+  ]
+}
