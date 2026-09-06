@@ -113,10 +113,30 @@ Agents must not settle cross-cutting architecture by informal peer consensus. If
 
 Prefer durable artifacts, issues, PRs, and typed handoffs over long free-form agent conversations.
 
-## 8. Build/research discipline
+## 8. External benchmark first — governing law
+
+Before proposing a material solution, architecture, engineering process, orchestration mechanism, platform pattern, research method, or operating model, first check established public practice when a relevant benchmark plausibly exists.
+
+This is mandatory, not optional.
+
+The agent must:
+
+1. identify the closest real-world analogue or established category;
+2. inspect current public practice from serious practitioners, primary vendor documentation, credible engineering organizations, standards bodies, peer-reviewed literature, or other authoritative sources as appropriate;
+3. distinguish established practice from emerging practice, vendor claims, and the agent's own inference;
+4. prefer a proven standard pattern when it satisfies GenSigma's requirements;
+5. invent a novel mechanism only when existing approaches are inadequate, and state exactly why they are inadequate;
+6. record consequential benchmark findings or citations in the relevant durable design, ADR, research artifact, or execution plan when they materially influence a decision.
+
+Do not start from a bespoke design when the industry has already solved the class of problem.
+
+Do not use "industry best practice" as an unsupported phrase. Verify what leading practitioners actually do.
+
+When current external evidence is needed, research it before giving the recommendation. If the user explicitly restricts the task to private/repository sources or prohibits external research, honor that constraint and state that the external benchmark step was intentionally skipped.
+
+## 9. Build/research discipline
 
 - Do not silently drift from approved doctrine.
-- Check established public practice before inventing a novel engineering mechanism when a mature pattern plausibly exists.
 - Do not make source schemas the ontology.
 - Do not let probabilistic output silently become canonical truth.
 - Do not choose infrastructure because of fashion or model preference.
@@ -125,13 +145,13 @@ Prefer durable artifacts, issues, PRs, and typed handoffs over long free-form ag
 - Tests, acceptance criteria, and architecture fitness checks are part of the contract, not optional cleanup.
 - When a design is sufficiently specified for a bounded implementation task, stop discussing and build.
 
-## 9. Durable workstream output
+## 10. Durable workstream output
 
 A specialist chat may be used for discussion, research, design, and planning, but material results must be made durable in GitHub. A competent future session must be able to continue without reading the originating chat.
 
 Build-ready work must have an execution plan or equivalent governing design plus bounded implementation issues with explicit acceptance criteria.
 
-## 10. Future agents and workstreams
+## 11. Future agents and workstreams
 
 Every future GenSigma OS agent/workstream definition must explicitly inherit:
 
