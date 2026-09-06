@@ -1,0 +1,40 @@
+fixture_id: finance
+version: 0.1.0
+purpose: exercise invoice/payment state, contradictory claims, restricted evidence, and action authority separation
+
+resources:
+  - {id: project_001, type: Project, canonical_name: Data Modernization}
+  - {id: invoice_001, type: Invoice}
+  - {id: payment_001, type: Payment}
+  - {id: claim_paid, type: Claim, proposition: invoice_001 paid}
+  - {id: claim_unpaid, type: Claim, proposition: invoice_001 unpaid}
+
+state_case:
+  invoice_history:
+    - {at: 2026-08-01T00:00:00Z, status: issued}
+    - {at: 2026-08-31T00:00:00Z, status: paid}
+  payment_settles: invoice_001
+
+contradiction_case:
+  claims:
+    - {id: claim_paid, authority: bank_reconciliation, supports_status: paid}
+    - {id: claim_unpaid, authority: stale_ar_export, supports_status: outstanding}
+  expected_resolution: paid
+  preserve_losing_claim: true
+
+security_case:
+  restricted_evidence: bank_statement
+  visible_projection: invoice_paid
+  requirement: bank details remain hidden while policy may permit paid status projection
+
+authority_case:
+  actor_can_read_invoice: true
+  actor_can_record_payment: false
+  expected_result_for_record_action: forbidden
+
+expected_assertions:
+  - T21
+  - T22
+  - T24
+  - T25
+  - T28
