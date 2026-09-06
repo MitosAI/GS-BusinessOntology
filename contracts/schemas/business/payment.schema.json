@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gensigma.example/contracts/business/payment.schema.json",
+  "title": "Payment",
+  "allOf": [
+    {"$ref": "../kernel/canonical-resource.schema.json"},
+    {
+      "type": "object",
+      "properties": {
+        "type": {"const": "Payment"},
+        "model_owner": {"const": "business_reality"},
+        "payment_reference": {"type": ["string", "null"]},
+        "payer_ref": {"$ref": "../kernel/canonical-ref.schema.json"},
+        "payee_ref": {"$ref": "../kernel/canonical-ref.schema.json"},
+        "currency": {"type": "string", "minLength": 3, "maxLength": 3},
+        "amount": {"type": "number"},
+        "payment_date": {"type": ["string", "null"], "format": "date"},
+        "settlement_date": {"type": ["string", "null"], "format": "date"},
+        "payment_status": {
+          "type": "string",
+          "enum": ["initiated", "pending", "settled", "failed", "reversed", "refunded", "adjusted", "unknown"]
+        }
+      },
+      "required": ["payer_ref", "payee_ref", "currency", "amount", "payment_status"]
+    }
+  ]
+}
