@@ -1,56 +1,59 @@
 # KOE Governance Reconciliation and Build Status
 
-**Version:** v0.1  
+**Version:** v0.2  
 **Status:** Active checkpoint  
 **Owner:** Knowledge & Ontology Engineering (KOE-001)
 
 ---
 
-## 1. Why this checkpoint exists
+## 1. Purpose
 
-The KOE workstream advanced while the program base branch also advanced. The base branch added repository-wide agent rules, a Chief Architect-owned BUILD SPEC 001 skeleton, inter-layer contracts, system fitness criteria, and updated role charters.
+Record the current governance state for KOE after the program operating model, ADR-002 scope decision, unified workstream delivery standard, and first executable reference kernel.
 
-This checkpoint records what has been reconciled and what remains blocked by architecture governance.
+This file supersedes the earlier checkpoint that treated Architecture Request #5 as unresolved.
 
 ---
 
 ## 2. Governing material reconciled
 
-KOE has reviewed the newer base-branch material relevant to current work, including:
+KOE work is governed by:
 
 - `AGENTS.md`;
-- updated `docs/roles/03-KNOWLEDGE-ONTOLOGY-ENGINEERING-LEAD-CHARTER.md`;
-- `docs/build/BUILD-SPEC-001-BUSINESS-REALITY-MVP-SKELETON-v0.1.md`;
+- `docs/program/08-WORKSTREAM-DELIVERY-STANDARD-v0.1.md`;
+- `docs/protocols/AGENT-DEFINITION-AND-ESCALATION-STANDARD-v0.1.md`;
+- `docs/roles/03-KNOWLEDGE-ONTOLOGY-ENGINEERING-LEAD-CHARTER.md`;
 - `docs/program/04-ARCHITECTURE-INTEGRATION-AND-INTERLAYER-CONTRACTS-v0.1.md`;
-- `docs/program/06-SYSTEM-ACCEPTANCE-AND-ARCHITECTURE-FITNESS-v0.1.md`.
+- `docs/program/06-SYSTEM-ACCEPTANCE-AND-ARCHITECTURE-FITNESS-v0.1.md`;
+- `docs/build/BUILD-SPEC-001-BUSINESS-REALITY-MVP-SKELETON-v0.1.md`;
+- `docs/adr/ADR-002-BUILD-SPEC-001-SCOPE-AND-SEMANTIC-FOUNDATION.md`;
+- `docs/adr/ADR-003-EXECUTIVE-COGNITION-WORKING-ARCHITECTURE.md` where cognition-facing semantic requirements apply.
 
-The repository `LOCAL_SOLVE` / `ASK_ARCHITECT` rule now governs this workstream.
-
----
-
-## 3. Architecture question raised
-
-GitHub Issue #5:
-
-`[ARCH-REQ] Reconcile Build Spec 001 scope with enterprise Business Reality semantic foundation`
-
-The unresolved question is whether the name BUILD SPEC 001 refers to:
-
-- the Chief Architect-owned narrow executable vertical slice; or
-- the broader enterprise semantic foundation produced by KOE.
-
-KOE recommendation: **keep BUILD SPEC 001 narrow and executable; keep the enterprise semantic foundation broad and treat it as the compatibility/reference contract from which the slice selects a subset.**
-
-This blocks only final Build Spec naming/scope and merge decisions that depend on that scope.
+The repository `FRAME -> RESEARCH -> DESIGN -> PLAN -> TASK -> BUILD -> VERIFY / LEARN` cycle and `LOCAL_SOLVE` / `ASK_ARCHITECT` rule govern this workstream.
 
 ---
 
-## 4. Work that is complete and not blocked
+## 3. Architecture Request #5 — resolved
 
-### Semantic foundation
+Issue #5 is CLOSED / DECIDED.
+
+ADR-002 is authoritative:
+
+- **Business Reality Semantic Foundation** = broad enterprise semantic compatibility envelope;
+- **BUILD SPEC 001** = narrow Chief Architect-owned first executable vertical slice;
+- BUILD SPEC 001 selects the minimum coherent subset plus shared identity, evidence/provenance, time, security, correction and other hard invariants;
+- the broad foundation does not force all candidate V1 objects into the first runtime;
+- the pilot does not redefine the enterprise ontology.
+
+KOE's current minimum-slice recommendation is recorded in `27-BUILD-SPEC-001-MINIMUM-SEMANTIC-SUBSET-v0.1.md`.
+
+---
+
+## 4. Completed semantic foundation baseline
+
+### Design and semantics
 
 - four governing design truths;
-- 38-object V1 semantic compatibility envelope;
+- current 38-candidate V1 semantic compatibility envelope within the approximately 30–40 KOE design guardrail;
 - object definitions and admission decisions;
 - typed relationship and contextual-role catalog;
 - model ownership/boundary map;
@@ -63,92 +66,122 @@ This blocks only final Build Spec naming/scope and merge decisions that depend o
 
 ### Machine-readable contracts
 
-The `contracts/` package now contains:
+The `contracts/` package contains:
 
-- common kernel schemas for identity/reference, time, epistemic status, provenance, source mapping, security, alias, correction/audit, canonical resource, typed relationship;
-- distinct Event / Assessment / Decision / Approval / Action / Outcome schemas;
-- machine-readable schemas covering all current V1 object types;
+- canonical resource/reference, identity/source mappings, aliases, time, epistemic status, provenance, security and correction/audit contracts;
+- typed relationship contract;
+- distinct Event / Assessment / Decision / Approval / Action / Outcome contracts;
+- schemas covering the current V1 candidate semantic types;
+- RawEvidence -> Observation -> Candidate evidence-layer contracts;
 - logical OpenAPI 3.1 contract;
-- seven concrete fixture packs: identity plus commercial, delivery, workforce, compliance, technology, finance;
-- T01-T31 acceptance manifest bound to concrete fixture paths;
+- identity fixture plus six domain fixture packs;
+- T01-T31 acceptance manifest;
 - FF-001 through FF-010 architecture-fitness manifest;
+- workload/scale measurement profile;
 - explicit open semantic questions.
 
-### Cross-model ownership reconciliation
+### Cross-model ownership
 
-The machine-readable contracts now align with the inter-layer ownership doctrine for the material cross-model cases:
+The current KOE ownership map treats:
 
-- `Offering.model_owner = business_intent`;
-- `Capability.model_owner = capability`;
-- `Risk.model_owner = executive_judgment`;
-- `Assessment` / `Decision` follow Executive Judgment ownership;
-- `Action` follows Governed Action ownership;
-- `Outcome` follows Outcome/Learning ownership;
-- Business Reality references these resources rather than forking their semantics.
+- Offering -> Business Intent;
+- Capability -> Capability Model;
+- Assessment / Risk / Decision -> Executive Judgment;
+- Approval -> Executive Judgment / Governed Action boundary;
+- Action -> Governed/Kinetic Action;
+- Outcome -> Outcome/Learning;
+- Business Reality -> canonical operational facts/history plus references to those owned concepts.
 
 ---
 
-## 5. Architecture fitness posture
+## 5. Executive Cognition dependency
 
-The contract package represents Chief Architect fitness functions FF-001 through FF-010.
+ADR-003 is accepted working architecture and creates six KOE-facing semantic/query obligations without automatically creating new object types:
 
-Contract-level fitness can be checked now. Runtime-required functions must remain `NOT_RUN` / `CONTRACT_READY` until a runtime exists.
+1. probability adequacy;
+2. multidimensional uncertainty;
+3. ex-ante expectations;
+4. reversal/sensitivity conditions;
+5. decision-method provenance;
+6. causal-versus-predictive distinction.
 
-In particular, the current package must not claim runtime PASS for:
+KOE must represent these in the smallest coherent shared structures and avoid object proliferation. This integration is READY work; it does not justify redefining the 38-object catalog by itself.
 
-- idempotent ingestion;
-- security non-leakage under real search/runtime execution;
-- typed-action enforcement at runtime;
+---
+
+## 6. Executable runtime checkpoint
+
+PR #7, `Build 002: executable Business Reality reference kernel v0.1`, is the current reference implementation path.
+
+Verified PASS behavior includes:
+
+- JSON Schema runtime validation;
+- append-oriented replay-idempotent raw evidence;
+- immutable evidence identity/content behavior;
+- candidates must reference known evidence;
+- no public direct canonical put path;
+- promotion records preserve candidate/evidence lineage;
+- non-destructive canonical correction/history;
+- CI passed on the reviewed implementation head.
+
+KOE review found two bounded LOCAL_SOLVE gaps, tracked in Issue #16:
+
+1. candidate `proposed_semantic_type` must be compatible with promoted resource type;
+2. semantic contract resolution must support both business and kernel resource contracts rather than hard-coding `schemas/business/`.
+
+The reference kernel is not a production authorization boundary and must not silently invent the final promotion-state machine.
+
+---
+
+## 7. Current repository integration state
+
+At the latest reconciliation:
+
+- PR #3: OPEN, KOE semantic foundation, currently non-mergeable because the branch has diverged from `main`;
+- KOE branch: `workstream/koe-first-session-v0.1`;
+- PR #7: OPEN, stacked on the KOE branch, currently non-mergeable until its base dependency is reconciled;
+- runtime branch: `build/reference-business-reality-kernel-v0.1`;
+- Issue #16: OPEN, bounded promotion/type-contract fixes;
+- Issue #5: CLOSED / DECIDED by ADR-002.
+
+The KOE branch must be reconciled/rebased with `main` before merge. PR #7 must then be retargeted/rebased appropriately.
+
+---
+
+## 8. Architecture fitness posture
+
+Contract-level fitness can be checked now. Runtime-required functions remain `NOT_RUN` / `CONTRACT_READY` until the corresponding implementation exists.
+
+Do not claim runtime PASS yet for:
+
+- full security non-leakage;
+- typed relationship behavior;
+- historical/as-of reads;
+- production promotion authority/conflict policy;
 - action verification;
-- recovery/replay behavior;
-- performance/scale targets.
+- recovery/replay beyond the current reference mechanism;
+- performance/scale targets;
+- production persistence/search architecture.
 
 ---
 
-## 6. Remaining READY work
+## 9. READY work
 
-Independent of Issue #5, the following work can continue:
+1. close Issue #16 in PR #7;
+2. complete stale Build-Spec naming cleanup under ADR-002;
+3. reconcile PR #3 with current `main`;
+4. integrate ADR-003's six semantic/query requirements minimally;
+5. continue small runtime increments: typed relationships -> temporal/as-of -> security context -> query/context API -> fitness verification.
 
-1. validate JSON Schema syntax/reference graph in an executable environment;
-2. validate OpenAPI 3.1 syntax/reference graph;
-3. validate acceptance/fitness manifests against fixture catalog;
-4. add explicit workload/scale measurement contract without inventing target values;
-5. add evidence-layer machine-readable contracts where required by the Chief Architect Build Spec and Evidence/Data interface;
-6. reconcile branch with the latest program base branch;
-7. report only genuine semantic gaps through ASK_ARCHITECT.
+## 10. BLOCKED / gated work
 
----
+- merging PR #3 is blocked by branch reconciliation/conflicts, not by a new semantic architecture question;
+- PR #7 integration is gated by PR #3/base reconciliation;
+- production persistence/search/cloud topology remains gated by Platform benchmark evidence and architecture decision;
+- authoritative BUILD SPEC 001 pilot/scope integration remains Chief Architect-owned, using KOE's minimum-subset recommendation as input.
 
-## 7. Work that must not proceed silently
+## 11. Architecture questions
 
-Until Issue #5 is resolved, do not:
+No unresolved KOE architecture request currently blocks normal work.
 
-- declare the KOE enterprise foundation itself the authoritative Chief Architect BUILD SPEC 001;
-- rename or supersede the Chief Architect build spec by local discretion;
-- merge code whose correctness depends on the unresolved scope decision.
-
-Do not select a production database/runtime merely to run contract validation.
-
----
-
-## 8. Recommended execution posture
-
-```text
-ENTERPRISE SEMANTIC FOUNDATION
-        |
-        | compatibility envelope
-        v
-CHIEF-ARCHITECT BUILD SPEC 001
-        |
-        | selects minimum coherent subset
-        v
-REFERENCE RUNTIME / VERTICAL SLICE
-        |
-        v
-FITNESS + REAL BUSINESS VALIDATION
-        |
-        v
-EXPAND DOMAINS WITHOUT REDEFINING KERNEL
-```
-
-This posture is a KOE recommendation pending the Chief Architect resolution of Issue #5.
+Open semantic questions in `contracts/OPEN-SEMANTIC-QUESTIONS.md` remain tentative/local rules unless a future implementation need turns one into a shared-architecture decision.
