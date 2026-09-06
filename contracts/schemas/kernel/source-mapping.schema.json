@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gensigma.example/contracts/kernel/source-mapping.schema.json",
+  "title": "Source Mapping",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "source_system": {"type": "string", "minLength": 1},
+    "source_namespace": {"type": "string", "minLength": 1},
+    "source_native_id": {"type": "string", "minLength": 1},
+    "source_version": {"type": ["string", "null"]},
+    "mapping_state": {
+      "type": "string",
+      "enum": ["accepted", "proposed", "rejected", "superseded", "ambiguous"]
+    },
+    "valid_from": {"type": ["string", "null"], "format": "date-time"},
+    "valid_to": {"type": ["string", "null"], "format": "date-time"},
+    "evidence_ref": {
+      "oneOf": [
+        {"$ref": "./canonical-ref.schema.json"},
+        {"type": "null"}
+      ]
+    }
+  },
+  "required": ["source_system", "source_namespace", "source_native_id", "mapping_state"]
+}
