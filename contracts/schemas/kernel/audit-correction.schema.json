@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gensigma.example/contracts/kernel/audit-correction.schema.json",
+  "title": "Audit and Correction Metadata",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "created_by": {"type": "string", "minLength": 1},
+    "created_at": {"type": "string", "format": "date-time"},
+    "last_changed_by": {"type": ["string", "null"]},
+    "last_changed_at": {"type": ["string", "null"], "format": "date-time"},
+    "change_reason": {"type": ["string", "null"]},
+    "change_request_id": {"type": ["string", "null"]},
+    "approval_ref": {
+      "oneOf": [
+        {"$ref": "./canonical-ref.schema.json"},
+        {"type": "null"}
+      ]
+    },
+    "correlation_id": {"type": ["string", "null"]},
+    "supersedes_ids": {
+      "type": "array",
+      "items": {"type": "string"},
+      "uniqueItems": true
+    },
+    "superseded_by_ids": {
+      "type": "array",
+      "items": {"type": "string"},
+      "uniqueItems": true
+    },
+    "correction_type": {
+      "type": ["string", "null"],
+      "enum": [
+        null,
+        "state_correction",
+        "identity_merge",
+        "identity_split",
+        "reclassification",
+        "relationship_correction",
+        "time_correction",
+        "provenance_correction",
+        "security_correction",
+        "semantic_migration"
+      ]
+    },
+    "effective_correction_time": {"type": ["string", "null"], "format": "date-time"},
+    "recorded_correction_time": {"type": ["string", "null"], "format": "date-time"}
+  },
+  "required": ["created_by", "created_at", "supersedes_ids", "superseded_by_ids"]
+}
