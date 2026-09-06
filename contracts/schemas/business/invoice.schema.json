@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gensigma.example/contracts/business/invoice.schema.json",
+  "title": "Invoice",
+  "allOf": [
+    {"$ref": "../kernel/canonical-resource.schema.json"},
+    {
+      "type": "object",
+      "properties": {
+        "type": {"const": "Invoice"},
+        "model_owner": {"const": "business_reality"},
+        "invoice_number": {"type": "string", "minLength": 1},
+        "issuer_ref": {"$ref": "../kernel/canonical-ref.schema.json"},
+        "recipient_ref": {"$ref": "../kernel/canonical-ref.schema.json"},
+        "currency": {"type": "string", "minLength": 3, "maxLength": 3},
+        "amount_due": {"type": "number"},
+        "issue_date": {"type": "string", "format": "date"},
+        "due_date": {"type": ["string", "null"], "format": "date"},
+        "invoice_status": {
+          "type": "string",
+          "enum": ["draft", "issued", "partially_paid", "paid", "disputed", "voided", "written_off", "unknown"]
+        }
+      },
+      "required": ["invoice_number", "issuer_ref", "recipient_ref", "currency", "amount_due", "issue_date", "invoice_status"]
+    }
+  ]
+}
