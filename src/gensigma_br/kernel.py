@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import copy
-import re
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any
@@ -25,6 +24,10 @@ class CandidateConflict(ValueError):
     pass
 
 
+class CandidateSemanticTypeMismatch(ValueError):
+    pass
+
+
 @dataclass(frozen=True)
 class PromotionRecord:
     resource_id: str
@@ -45,11 +48,6 @@ class CorrectionRecord:
 
 def _utc_now() -> str:
     return datetime.now(UTC).isoformat().replace("+00:00", "Z")
-
-
-def _schema_name(semantic_type: str) -> str:
-    # LegalEntity -> legal-entity, Organization -> organization.
-    return re.sub(r"(?<!^)(?=[A-Z])", "-", semantic_type).lower()
 
 
 class BusinessRealityKernel:
@@ -141,8 +139,15 @@ class BusinessRealityKernel:
         semantic_type = resource.get("type")
         if not semantic_type:
             raise ValueError("Canonical resource requires a semantic type")
-        schema_path = f"schemas/business/{_schema_name(semantic_type)}.schema.json"
-        self.contracts.validate(schema_path, resource)
+
+        proposed_semantic_type = candidate.get("proposed_semantic_type")
+        if proposed_semantic_type is not None and proposed_semantic_type != semantic_type:
+            raise CandidateSemanticTypeMismatch(
+                f"Candidate {candidate_id} proposes {proposed_semantic_type!r} "
+                f"but resource type is {semantic_type!r}"
+            )
+
+        self.contracts.validate_semantic_resource(semantic_type, resource)
 
         resource_id = resource["id"]
         self._canonical_history.setdefault(resource_id, []).append(copy.deepcopy(resource))
@@ -174,8 +179,7 @@ class BusinessRealityKernel:
         semantic_type = replacement.get("type")
         if not semantic_type:
             raise ValueError("Corrected resource requires a semantic type")
-        schema_path = f"schemas/business/{_schema_name(semantic_type)}.schema.json"
-        self.contracts.validate(schema_path, replacement)
+        self.contracts.validate_semantic_resource(semantic_type, replacement)
 
         self._canonical_history[resource_id].append(copy.deepcopy(replacement))
         record = CorrectionRecord(
