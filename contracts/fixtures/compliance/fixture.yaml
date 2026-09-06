@@ -1,0 +1,40 @@
+fixture_id: compliance
+version: 0.1.0
+purpose: exercise LegalEntity, Place/jurisdiction, Registration, Certification, obligation, effective vs discovered time, contradictory claims, and correction history
+
+resources:
+  - {id: org_parent, type: Organization, canonical_name: Example Holdings}
+  - {id: legal_entity_001, type: LegalEntity, legal_name: Example Services LLC}
+  - {id: place_nv, type: Place, canonical_name: Nevada}
+  - {id: registration_001, type: Registration, canonical_name: Nevada Foreign Qualification}
+  - {id: certification_001, type: Certification, canonical_name: Supplier Diversity Certification}
+  - {id: obligation_001, type: Obligation}
+
+structure_case:
+  relationships:
+    - {type: part_of, from: legal_entity_001, to: org_parent}
+  requirement: Organization and LegalEntity remain distinct identities
+
+time_case:
+  registration_effective_on: 2026-05-01
+  evidence_discovered_on: 2026-06-10
+  requirement: system may know in June that state became effective in May without backdating discovery
+
+contradiction_case:
+  claims:
+    - {id: claim_active, proposition: registration active, authority: state_registry}
+    - {id: claim_expired, proposition: registration expired, authority: stale_spreadsheet}
+  expected_resolution: active
+  losing_claim_preserved: true
+
+correction_case:
+  prior_registered_office: place_old
+  corrected_registered_office: place_new
+  preserve_prior_effective_period: true
+
+expected_assertions:
+  - T01
+  - T17
+  - T19
+  - T22
+  - T30

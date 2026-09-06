@@ -1,0 +1,40 @@
+fixture_id: workforce
+version: 0.1.0
+purpose: exercise person identity, position, skill, credential, certification, assignment, restricted evidence, and merge/split safety
+
+resources:
+  - {id: person_001, type: Person, canonical_name: Avery Shah}
+  - {id: position_001, type: Position, title: Senior Architect}
+  - {id: skill_001, type: Skill, canonical_name: ServiceNow Architecture}
+  - {id: credential_001, type: Credential, canonical_name: Platform Credential}
+  - {id: certification_001, type: Certification, canonical_name: Vendor Certification}
+  - {id: assignment_001, type: Assignment}
+
+identity_case:
+  source_records:
+    - {source_id: hr:employee:44, expected_resolution: person_001}
+    - {source_id: crm:contact:998, expected_resolution: person_001}
+  duplicate_person_identity_expected: false
+
+security_case:
+  restricted_evidence:
+    - compensation_document
+    - performance_note
+  visible_projection:
+    - active_assignment
+    - current_position
+  requirement: restricted evidence must not leak through search or traversal
+
+correction_case:
+  bad_merge_with: person_002
+  correction: split
+  must_preserve: [source_mappings, assignment_history, audit_history]
+
+expected_assertions:
+  - T05
+  - T11
+  - T12
+  - T17
+  - T24
+  - T26
+  - T29

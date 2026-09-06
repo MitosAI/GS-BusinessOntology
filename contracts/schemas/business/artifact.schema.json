@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gensigma.example/contracts/business/artifact.schema.json",
+  "title": "Artifact",
+  "allOf": [
+    {"$ref": "../kernel/canonical-resource.schema.json"},
+    {"type":"object","properties":{
+      "type":{"const":"Artifact"},
+      "model_owner":{"const":"business_reality"},
+      "canonical_name":{"type":"string","minLength":1},
+      "artifact_kind":{"type":["string","null"]},
+      "content_hash":{"type":["string","null"]},
+      "mime_type":{"type":["string","null"]},
+      "author_ref":{"oneOf":[{"$ref":"../kernel/canonical-ref.schema.json"},{"type":"null"}]},
+      "created_at":{"type":["string","null"],"format":"date-time"},
+      "status":{"type":"string","enum":["draft","active","superseded","archived","deleted_at_source","unknown"]}
+    },"required":["canonical_name","status"]}
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gensigma.example/contracts/business/proposal.schema.json",
+  "title": "Proposal",
+  "allOf": [
+    {"$ref": "../kernel/canonical-resource.schema.json"},
+    {"type":"object","properties":{
+      "type":{"const":"Proposal"},
+      "model_owner":{"const":"business_reality"},
+      "canonical_name":{"type":"string","minLength":1},
+      "opportunity_ref":{"$ref":"../kernel/canonical-ref.schema.json"},
+      "status":{"type":"string","enum":["draft","in_review","approved","submitted","withdrawn","accepted","rejected","superseded","unknown"]},
+      "submitted_at":{"type":["string","null"],"format":"date-time"},
+      "primary_artifact_ref":{"oneOf":[{"$ref":"../kernel/canonical-ref.schema.json"},{"type":"null"}]}
+    },"required":["canonical_name","opportunity_ref","status"]}
+  ]
+}

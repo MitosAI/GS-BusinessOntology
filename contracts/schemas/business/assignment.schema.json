@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gensigma.example/contracts/business/assignment.schema.json",
+  "title": "Assignment",
+  "allOf": [
+    {"$ref": "../kernel/canonical-resource.schema.json"},
+    {"type":"object","properties":{
+      "type":{"const":"Assignment"},
+      "model_owner":{"const":"business_reality"},
+      "assignee_ref":{"$ref":"../kernel/canonical-ref.schema.json"},
+      "context_ref":{"$ref":"../kernel/canonical-ref.schema.json"},
+      "assignment_role":{"type":["string","null"]},
+      "allocation_fraction":{"type":["number","null"],"minimum":0,"maximum":1},
+      "status":{"type":"string","enum":["planned","active","paused","completed","cancelled","unknown"]}
+    },"required":["assignee_ref","context_ref","status"]}
+  ]
+}

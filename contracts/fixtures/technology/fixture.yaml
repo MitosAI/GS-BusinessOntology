@@ -1,0 +1,38 @@
+fixture_id: technology
+version: 0.1.0
+purpose: exercise Organization vendor role, System, Asset, Technology, agreement/dependency links, scoped relationship correction, and cross-model capability reference
+
+resources:
+  - {id: org_vendor, type: Organization, canonical_name: CloudWorks Inc.}
+  - {id: system_001, type: System, canonical_name: Service Desk Platform}
+  - {id: asset_001, type: Asset, canonical_name: Production Tenant}
+  - {id: technology_001, type: Technology, canonical_name: CloudWorks Platform}
+  - {id: agreement_001, type: Agreement, canonical_name: Cloud Subscription Agreement}
+  - {id: risk_001, type: Risk, canonical_name: Vendor Concentration Risk}
+
+relationships:
+  - {type: vendor_for, from: org_vendor, to: system_001, scope: system_001}
+  - {type: uses, from: system_001, to: technology_001}
+  - {type: instantiates, from: asset_001, to: technology_001}
+  - {type: governed_by, from: system_001, to: agreement_001}
+
+role_case:
+  requirement: org_vendor remains one Organization identity; Vendor is contextual role only
+
+correction_case:
+  prior_role: reseller
+  corrected_role: direct_provider
+  scope: system_001
+  preserve_prior_role_history: true
+
+cross_model_reference:
+  capability_ref: capability_external
+  model_owner: capability
+  requirement: do not copy capability assessment into Business Reality merely for storage
+
+expected_assertions:
+  - T07
+  - T11
+  - T13
+  - T15
+  - T31

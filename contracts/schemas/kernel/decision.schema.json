@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gensigma.example/contracts/kernel/decision.schema.json",
+  "title": "Decision",
+  "allOf": [
+    {"$ref": "./canonical-resource.schema.json"},
+    {
+      "type": "object",
+      "properties": {
+        "decision_question": {"type": "string", "minLength": 1},
+        "decision_scope_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "./canonical-ref.schema.json"}
+        },
+        "decision_maker_refs": {
+          "type": "array",
+          "items": {"$ref": "./canonical-ref.schema.json"}
+        },
+        "chosen_option_ref_or_value": {},
+        "decision_status": {
+          "type": "string",
+          "enum": ["proposed", "pending", "made", "superseded", "reversed", "expired", "unknown"]
+        },
+        "decided_at": {"type": ["string", "null"], "format": "date-time"}
+      },
+      "required": ["decision_question", "decision_scope_refs", "decision_maker_refs", "decision_status"]
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gensigma.example/contracts/business/obligation.schema.json",
+  "title": "Obligation",
+  "allOf": [
+    {"$ref": "../kernel/canonical-resource.schema.json"},
+    {"type":"object","properties":{
+      "type":{"const":"Obligation"},
+      "model_owner":{"const":"business_reality"},
+      "obligation_kind":{"type":"string","minLength":1},
+      "source_ref":{"$ref":"../kernel/canonical-ref.schema.json"},
+      "owner_ref":{"oneOf":[{"$ref":"../kernel/canonical-ref.schema.json"},{"type":"null"}]},
+      "due_at":{"type":["string","null"],"format":"date-time"},
+      "status":{"type":"string","enum":["pending","in_progress","satisfied","waived","breached","expired","cancelled","unknown"]}
+    },"required":["obligation_kind","source_ref","status"]}
+  ]
+}

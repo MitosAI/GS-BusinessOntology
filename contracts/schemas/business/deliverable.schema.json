@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gensigma.example/contracts/business/deliverable.schema.json",
+  "title": "Deliverable",
+  "allOf": [
+    {"$ref": "../kernel/canonical-resource.schema.json"},
+    {"type":"object","properties":{
+      "type":{"const":"Deliverable"},
+      "model_owner":{"const":"business_reality"},
+      "canonical_name":{"type":"string","minLength":1},
+      "project_ref":{"$ref":"../kernel/canonical-ref.schema.json"},
+      "milestone_ref":{"oneOf":[{"$ref":"../kernel/canonical-ref.schema.json"},{"type":"null"}]},
+      "status":{"type":"string","enum":["planned","in_progress","submitted","accepted","rejected","superseded","cancelled","unknown"]},
+      "accepted_at":{"type":["string","null"],"format":"date-time"}
+    },"required":["canonical_name","project_ref","status"]}
+  ]
+}

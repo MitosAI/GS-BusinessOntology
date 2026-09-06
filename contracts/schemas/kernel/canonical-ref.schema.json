@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gensigma.example/contracts/kernel/canonical-ref.schema.json",
+  "title": "Canonical Reference",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "id": {"type": "string", "minLength": 1},
+    "type": {"type": "string", "minLength": 1},
+    "model_owner": {
+      "type": "string",
+      "enum": [
+        "business_intent",
+        "business_reality",
+        "external_reality",
+        "capability",
+        "executive_judgment",
+        "governed_action",
+        "outcome_learning",
+        "shared_kernel"
+      ]
+    },
+    "contract_version": {"type": "string", "minLength": 1},
+    "projection_version": {"type": ["string", "null"]}
+  },
+  "required": ["id", "type", "model_owner", "contract_version"]
+}

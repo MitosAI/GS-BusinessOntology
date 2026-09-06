@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gensigma.example/contracts/evidence/candidate.schema.json",
+  "title": "Candidate",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "candidate_id": {"type":"string","minLength":1},
+    "candidate_type": {"type":"string","enum":["entity","relationship","context","event","claim","alias","decision_fragment","action","outcome","commitment","document_lineage"]},
+    "proposed_semantic_type": {"type":["string","null"]},
+    "subject_refs": {"type":"array","items":{"$ref":"../kernel/canonical-ref.schema.json"}},
+    "context_refs": {"type":"array","items":{"$ref":"../kernel/canonical-ref.schema.json"}},
+    "observation_ids": {"type":"array","items":{"type":"string"}},
+    "source_evidence_ids": {"type":"array","minItems":1,"items":{"type":"string"}},
+    "epistemic_status": {"$ref":"../kernel/epistemic-status.schema.json"},
+    "resolution_status": {"type":"string","enum":["new","unresolved","multiple_plausible","proposed","accepted","rejected","superseded"]},
+    "security": {"$ref":"../kernel/security-descriptor.schema.json"},
+    "created_at": {"type":"string","format":"date-time"}
+  },
+  "required": ["candidate_id","candidate_type","source_evidence_ids","epistemic_status","resolution_status","security","created_at"]
+}

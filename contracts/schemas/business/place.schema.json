@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gensigma.example/contracts/business/place.schema.json",
+  "title": "Place",
+  "allOf": [
+    {"$ref": "../kernel/canonical-resource.schema.json"},
+    {"type":"object","properties":{
+      "type":{"const":"Place"},
+      "model_owner":{"const":"business_reality"},
+      "canonical_name":{"type":"string","minLength":1},
+      "place_kind":{"type":["string","null"]},
+      "country_code":{"type":["string","null"],"minLength":2,"maxLength":2},
+      "region":{"type":["string","null"]},
+      "locality":{"type":["string","null"]}
+    },"required":["canonical_name"]}
+  ]
+}

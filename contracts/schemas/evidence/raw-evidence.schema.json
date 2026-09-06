@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gensigma.example/contracts/evidence/raw-evidence.schema.json",
+  "title": "RawEvidence",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "evidence_id": {"type":"string","minLength":1},
+    "source_system": {"type":"string","minLength":1},
+    "source_tenant": {"type":["string","null"]},
+    "source_container": {"type":["string","null"]},
+    "source_record_id": {"type":"string","minLength":1},
+    "source_version": {"type":["string","null"]},
+    "source_reference": {"type":["string","null"]},
+    "source_created_time": {"type":["string","null"],"format":"date-time"},
+    "source_modified_time": {"type":["string","null"],"format":"date-time"},
+    "acquired_time": {"type":"string","format":"date-time"},
+    "content_hash": {"type":["string","null"]},
+    "content_pointer": {"type":["string","null"]},
+    "security": {"$ref":"../kernel/security-descriptor.schema.json"},
+    "parent_evidence_id": {"type":["string","null"]},
+    "origin_evidence_id": {"type":["string","null"]},
+    "ingestion_run_id": {"type":"string","minLength":1}
+  },
+  "required": ["evidence_id","source_system","source_record_id","acquired_time","security","ingestion_run_id"]
+}

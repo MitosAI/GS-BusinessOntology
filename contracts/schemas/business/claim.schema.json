@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gensigma.example/contracts/business/claim.schema.json",
+  "title": "Claim",
+  "allOf": [
+    {"$ref": "../kernel/canonical-resource.schema.json"},
+    {
+      "type": "object",
+      "properties": {
+        "type": {"const": "Claim"},
+        "model_owner": {"const": "shared_kernel"},
+        "predicate_or_claim_type": {"type": "string", "minLength": 1},
+        "subject_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "../kernel/canonical-ref.schema.json"}
+        },
+        "object_value_or_ref": {},
+        "claim_polarity": {
+          "type": ["string", "null"],
+          "enum": [null, "positive", "negative", "unknown"]
+        },
+        "claim_status": {
+          "type": "string",
+          "enum": ["proposed", "supported", "contradicted", "accepted", "rejected", "superseded", "unresolved"]
+        }
+      },
+      "required": ["predicate_or_claim_type", "subject_refs", "object_value_or_ref", "claim_status"]
+    }
+  ]
+}

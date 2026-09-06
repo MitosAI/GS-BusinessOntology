@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gensigma.example/contracts/business/position.schema.json",
+  "title": "Position",
+  "allOf": [
+    {"$ref": "../kernel/canonical-resource.schema.json"},
+    {"type":"object","properties":{
+      "type":{"const":"Position"},
+      "model_owner":{"const":"business_reality"},
+      "title":{"type":"string","minLength":1},
+      "unit_ref":{"oneOf":[{"$ref":"../kernel/canonical-ref.schema.json"},{"type":"null"}]},
+      "reports_to_position_ref":{"oneOf":[{"$ref":"../kernel/canonical-ref.schema.json"},{"type":"null"}]},
+      "status":{"type":"string","enum":["open","occupied","inactive","planned","closed","unknown"]}
+    },"required":["title","status"]}
+  ]
+}

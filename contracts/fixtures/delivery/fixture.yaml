@@ -1,0 +1,33 @@
+fixture_id: delivery
+version: 0.1.0
+purpose: exercise project, milestone, deliverable, assignment, invoice linkage, temporal state, and duplicate evidence lineage
+
+resources:
+  - {id: project_001, type: Project, canonical_name: Identity Modernization}
+  - {id: milestone_001, type: Milestone, canonical_name: Design Complete}
+  - {id: deliverable_001, type: Deliverable, canonical_name: Architecture Package}
+  - {id: assignment_001, type: Assignment}
+  - {id: invoice_001, type: Invoice}
+
+state_history:
+  - {at: 2026-07-01T00:00:00Z, project_status: planned}
+  - {at: 2026-07-15T00:00:00Z, project_status: active}
+  - {at: 2026-08-20T00:00:00Z, deliverable_status: submitted}
+  - {at: 2026-08-25T00:00:00Z, deliverable_status: accepted}
+
+lineage_case:
+  - {evidence_id: acceptance_email_original, origin_id: origin_acceptance}
+  - {evidence_id: acceptance_email_forward, origin_id: origin_acceptance, expected_independence: false}
+
+cross_domain_chain:
+  - project_001
+  - deliverable_001
+  - invoice_001
+
+expected_assertions:
+  - T02
+  - T03
+  - T14
+  - T27
+  - T28
+  - T29

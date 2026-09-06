@@ -1,0 +1,75 @@
+version: 0.1.0
+source: docs/program/06-SYSTEM-ACCEPTANCE-AND-ARCHITECTURE-FITNESS-v0.1.md
+status: contract-level-baseline
+
+fitness_functions:
+  - id: FF-001
+    name: provenance_completeness
+    phase: contract_and_runtime
+    fixtures: [commercial, compliance, finance]
+    contract_check: material canonical changes require provenance or authorized manual origin
+    target: 100_percent_material_changes
+
+  - id: FF-002
+    name: no_direct_connector_to_canonical_write
+    phase: architecture_static_check
+    fixtures: [all]
+    contract_check: connectors terminate at evidence/candidate boundary and cannot invoke canonical mutation without governed promotion
+
+  - id: FF-003
+    name: idempotent_ingestion
+    phase: runtime_required
+    fixtures: [commercial, delivery]
+    contract_check: source identity and replay semantics must permit exactly-once-effect behavior
+
+  - id: FF-004
+    name: reversible_identity_merge
+    phase: contract_and_runtime
+    fixtures: [identity, workforce]
+    contract_check: merge/split preserve source mappings provenance relationship history and audit history
+
+  - id: FF-005
+    name: historical_as_of_query
+    phase: contract_and_runtime
+    fixtures: [commercial, delivery, compliance]
+    contract_check: API exposes as_of and temporal mode without projecting later knowledge backward
+
+  - id: FF-006
+    name: security_non_leakage
+    phase: runtime_required
+    fixtures: [workforce, commercial, finance]
+    contract_check: every read/search/traversal is security-context aware and derived projection does not imply evidence access
+
+  - id: FF-007
+    name: explicit_vs_inferred_decision_trace
+    phase: contract_and_runtime
+    fixtures: [commercial]
+    contract_check: epistemic status distinguishes explicit inferred unknown and accepted resources
+
+  - id: FF-008
+    name: typed_action_enforcement
+    phase: runtime_required
+    fixtures: [commercial, finance]
+    contract_check: public material state mutation must route through governed action/promotion/correction contracts
+
+  - id: FF-009
+    name: action_verification
+    phase: runtime_required
+    fixtures: [commercial, delivery]
+    contract_check: Action remains distinct from Event and Outcome and can reference verification evidence
+
+  - id: FF-010
+    name: projection_non_authority
+    phase: architecture_and_runtime
+    fixtures: [all]
+    contract_check: search/vector/graph projections are rebuildable views and cannot become canonical source of truth
+
+runtime_gate:
+  rule: fitness functions marked runtime_required cannot be declared PASS during contract-only Build 001
+  allowed_statuses: [NOT_RUN, CONTRACT_READY, PASS, FAIL]
+
+build_001_contract_completion:
+  requires:
+    - all FF functions have representable contract semantics
+    - all referenced fixture aliases resolve through acceptance-manifest fixture_catalog
+    - runtime-required functions remain explicitly NOT_RUN until a runtime exists

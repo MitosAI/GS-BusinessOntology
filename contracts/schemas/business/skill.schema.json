@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gensigma.example/contracts/business/skill.schema.json",
+  "title": "Skill",
+  "allOf": [
+    {"$ref": "../kernel/canonical-resource.schema.json"},
+    {"type":"object","properties":{
+      "type":{"const":"Skill"},
+      "model_owner":{"const":"business_reality"},
+      "canonical_name":{"type":"string","minLength":1},
+      "skill_category":{"type":["string","null"]},
+      "status":{"type":"string","enum":["active","deprecated","retired","unknown"]}
+    },"required":["canonical_name","status"]}
+  ]
+}

@@ -1,0 +1,43 @@
+fixture_id: identity
+version: 0.1.0
+purpose: exercise ambiguity, aliasing, merge/split, and source-to-canonical separation
+
+canonical_resources:
+  - id: org_alpha
+    type: Organization
+    canonical_name: Alpha Systems LLC
+  - id: org_alfa
+    type: Organization
+    canonical_name: Alfa Systems Inc.
+  - id: person_jordan_1
+    type: Person
+    canonical_name: Jordan Lee
+  - id: person_jordan_2
+    type: Person
+    canonical_name: Jordan Lee
+
+source_records:
+  - source_id: crm:org:100
+    observed_name: Alpha Systems
+    candidate_matches: [org_alpha, org_alfa]
+    expected_resolution: unresolved
+  - source_id: email:sender:jlee@example-a.com
+    observed_name: Jordan Lee
+    expected_resolution: person_jordan_1
+  - source_id: email:sender:jlee@example-b.com
+    observed_name: Jordan Lee
+    expected_resolution: person_jordan_2
+
+correction_case:
+  initial_merge: [person_jordan_1, person_jordan_2]
+  later_action: split
+  must_preserve:
+    - both source mappings
+    - pre-merge relationship history
+    - merge audit event
+    - split audit event
+
+expected_assertions:
+  - T05
+  - T12
+  - T16
