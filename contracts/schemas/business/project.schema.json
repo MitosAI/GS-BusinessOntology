@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gensigma.example/contracts/business/project.schema.json",
+  "title": "Project",
+  "allOf": [
+    {"$ref": "../kernel/canonical-resource.schema.json"},
+    {
+      "type": "object",
+      "properties": {
+        "type": {"const": "Project"},
+        "model_owner": {"const": "business_reality"},
+        "project_name": {"type": "string", "minLength": 1},
+        "project_type": {"type": ["string", "null"]},
+        "customer_ref": {
+          "oneOf": [
+            {"$ref": "../kernel/canonical-ref.schema.json"},
+            {"type": "null"}
+          ]
+        },
+        "project_status": {
+          "type": "string",
+          "enum": ["planned", "active", "paused", "completed", "cancelled", "closed", "unknown"]
+        },
+        "start_date": {"type": ["string", "null"], "format": "date"},
+        "target_end_date": {"type": ["string", "null"], "format": "date"},
+        "actual_end_date": {"type": ["string", "null"], "format": "date"},
+        "project_owner_ref": {
+          "oneOf": [
+            {"$ref": "../kernel/canonical-ref.schema.json"},
+            {"type": "null"}
+          ]
+        }
+      },
+      "required": ["project_name", "project_status"]
+    }
+  ]
+}
