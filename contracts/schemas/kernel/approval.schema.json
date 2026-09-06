@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gensigma.example/contracts/kernel/approval.schema.json",
+  "title": "Approval",
+  "allOf": [
+    {"$ref": "./canonical-resource.schema.json"},
+    {
+      "type": "object",
+      "properties": {
+        "approval_subject_ref": {"$ref": "./canonical-ref.schema.json"},
+        "approver_ref": {"$ref": "./canonical-ref.schema.json"},
+        "authority_basis_ref": {
+          "oneOf": [
+            {"$ref": "./canonical-ref.schema.json"},
+            {"type": "null"}
+          ]
+        },
+        "approval_status": {
+          "type": "string",
+          "enum": ["requested", "approved", "rejected", "revoked", "expired", "superseded", "unknown"]
+        },
+        "requested_at": {"type": ["string", "null"], "format": "date-time"},
+        "decided_at": {"type": ["string", "null"], "format": "date-time"}
+      },
+      "required": ["approval_subject_ref", "approver_ref", "approval_status"]
+    }
+  ]
+}
