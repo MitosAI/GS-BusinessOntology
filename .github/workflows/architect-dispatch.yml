@@ -14,9 +14,6 @@ permissions:
   contents: read
   issues: write
 
-env:
-  CA_WORKSPACE_AGENT_ID: agtch_6a9cc7f918a08191820b3899a2486a70
-
 jobs:
   dispatch:
     if: >-
@@ -25,9 +22,22 @@ jobs:
        (contains(github.event.issue.labels.*.name, 'needs-architect') ||
         contains(github.event.issue.labels.*.name, 'ask-architect')))
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 15
 
     steps:
+      - name: Check out canonical repository state
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install architect runtime
+        run: pip install openai-agents pydantic
+
       - name: Resolve issue number
         id: issue
         shell: bash
@@ -38,42 +48,46 @@ jobs:
             echo "number=${{ github.event.issue.number }}" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Trigger CA-001 Workspace Agent
+      - name: Run CA-001 against the architecture request
         env:
-          CHATGPT_AGENT_ACCESS_TOKEN: ${{ secrets.CHATGPT_AGENT_ACCESS_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ARCHITECT_MODEL: ${{ vars.ARCHITECT_MODEL || 'gpt-5.6-sol' }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
           ISSUE_NUMBER: ${{ steps.issue.outputs.number }}
-          REPOSITORY: ${{ github.repository }}
         shell: bash
         run: |
-          if [ -z "$CHATGPT_AGENT_ACCESS_TOKEN" ]; then
-            echo "Missing required repository Actions secret: CHATGPT_AGENT_ACCESS_TOKEN"
+          if [ -z "$OPENAI_API_KEY" ]; then
+            echo "Missing required repository Actions secret: OPENAI_API_KEY"
             exit 1
           fi
+          python tools/architect_dispatch.py
 
-          INPUT="You are CA-001. Process the Architecture Decision Request in GitHub Issue #${ISSUE_NUMBER} in ${REPOSITORY}. Read the issue and the current governing repository artifacts using your connected GitHub tools. Apply the CA-001 decision protocol. If a GitHub write-capable action is available to you, post the final disposition back to the issue and update its status labels. If no write-capable action is available, complete the decision but do not claim that write-back occurred."
-          BODY=$(jq -n --arg input "$INPUT" '{input:$input}')
-
-          HTTP_CODE=$(curl -sS -o /tmp/ca_response.txt -w '%{http_code}' \
-            -X POST \
-            "https://api.chatgpt.com/v1/workspace_agents/${CA_WORKSPACE_AGENT_ID}/trigger" \
-            -H "Authorization: Bearer ${CHATGPT_AGENT_ACCESS_TOKEN}" \
-            -H "Content-Type: application/json" \
-            -d "$BODY")
-
-          if [ "$HTTP_CODE" != "202" ]; then
-            echo "CA-001 trigger failed with HTTP ${HTTP_CODE}"
-            cat /tmp/ca_response.txt
-            exit 1
-          fi
-
-          echo "CA-001 dispatch accepted (HTTP 202)."
-
-      - name: Mark request dispatched
+      - name: Publish Chief Architect response
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
           ISSUE_NUMBER: ${{ steps.issue.outputs.number }}
         shell: bash
         run: |
-          gh label create "architect-dispatched" --repo "$GH_REPO" --color "1d76db" --description "CA-001 Workspace Agent trigger accepted" --force
-          gh issue edit "$ISSUE_NUMBER" --repo "$GH_REPO" --add-label "architect-dispatched"
+          gh issue comment "$ISSUE_NUMBER" --repo "$GH_REPO" --body-file architect_response.md
+
+      - name: Update request labels
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          ISSUE_NUMBER: ${{ steps.issue.outputs.number }}
+        shell: bash
+        run: |
+          STATUS=$(python - <<'PY'
+          import json
+          with open('architect_decision.json', 'r', encoding='utf-8') as f:
+              status = json.load(f)['status'].lower().replace('_', '-')
+          print('architect-' + status)
+          PY
+          )
+          gh label create "$STATUS" --repo "$GH_REPO" --color "6f42c1" --description "Chief Architect disposition" --force
+          gh issue edit "$ISSUE_NUMBER" --repo "$GH_REPO" --add-label "$STATUS"
+          gh issue edit "$ISSUE_NUMBER" --repo "$GH_REPO" --remove-label "needs-architect" || true
+          gh issue edit "$ISSUE_NUMBER" --repo "$GH_REPO" --remove-label "ask-architect" || true
+          gh issue edit "$ISSUE_NUMBER" --repo "$GH_REPO" --remove-label "architect-dispatched" || true
