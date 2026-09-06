@@ -1,8 +1,8 @@
 # R001 — Benchmark Practice Validation
 
-**Status:** COMPLETE — benchmark-first validation of the existing cognition harness  
+**Status:** COMPLETE — benchmark-first validation of the cognition harness  
 **Owner:** ECR-001 — Executive Cognition Research Lead  
-**Architecture impact:** `LOCAL_SOLVE`; no shared architecture is changed by this artifact.
+**Architecture impact:** `LOCAL_SOLVE`; benchmark mechanics do not change shared architecture. The cognition architecture itself is governed by accepted `ADR-003`.
 
 ## Question
 
@@ -10,7 +10,7 @@ Does the proposed GenSigma executive-cognition benchmark harness follow establis
 
 ## Why it matters
 
-The new repository operating law requires external benchmark practice to be checked before a material research/evaluation mechanism is adopted. R001-13 already proposed a frozen-case, multi-arm, multi-metric evaluation harness. This artifact validates that design against established evaluation practice before implementation tasks are issued.
+Repository operating law requires external benchmark practice to be checked before a material research/evaluation mechanism is adopted. R001-13 proposed a frozen-case, multi-arm, multi-metric evaluation harness. This artifact validates that design against established evaluation practice before implementation.
 
 ## Evidence / public practice
 
@@ -75,6 +75,8 @@ R001-13 should be made more execution-specific in five areas:
 4. **Repetition / variance:** non-deterministic arms should support repeated runs so variance is observable.
 5. **Reporting:** produce per-case and aggregate results, not only a leaderboard; include failure examples and confidence/uncertainty around comparisons when sample size permits.
 
+These gaps are incorporated into `16-EXECUTION-PLAN-COGNITION-BENCHMARK-v0.1.md` and implementation issues.
+
 ## GenSigma-specific implications
 
 GenSigma does **not** need a novel benchmark science stack. It needs a domain-specific application of established evaluation discipline to executive decisions.
@@ -93,9 +95,9 @@ The harness should therefore be implemented as a small reproducible evaluation f
 
 ## Recommendation
 
-Proceed to implementation of the benchmark harness infrastructure now.
+Proceed to implementation of the benchmark harness infrastructure and all benchmark arms authorized by the current architecture.
 
-The following are `LOCAL_SOLVE` and can be built before the Chief Architect resolves the cognition architecture:
+The following are `LOCAL_SOLVE` benchmark work and can proceed:
 
 - frozen-case manifest/schema;
 - evaluation-run manifest;
@@ -105,11 +107,16 @@ The following are `LOCAL_SOLVE` and can be built before the Chief Architect reso
 - scoring/evaluation framework;
 - forecast scoring utilities;
 - blind human-review packet generation;
-- reproducibility/report generation.
+- reproducibility/report generation;
+- historical Bid/No-Bid case pack;
+- modular routed cognition benchmark arm implementing the working architecture accepted in `ADR-003`.
 
-The **modular routed cognition arm** remains `BLOCKED_BY_ARCH_REQUEST` until `ADRQ-ECR-001` is resolved.
+## Architecture resolution update
 
-## Architecture impact
+The prior architecture request `ADRQ-ECR-001` is no longer open. CA-001 resolved it `DECIDED` and recorded the authoritative resolution in:
 
-`LOCAL_SOLVE` for benchmark mechanics.  
-`ASK_ARCHITECT` remains open only for the candidate Decision Engine architecture and any shared semantic contracts.
+`docs/adr/ADR-003-EXECUTIVE-COGNITION-WORKING-ARCHITECTURE.md`
+
+ADR-003 accepts the **Hierarchical Policy Portfolio** as working architecture subject to M11 validation, approves the shared semantic/query requirements, and designates **Bid / No-Bid** with **Staffing / Resource Assignment** as the contrast class.
+
+The benchmark is therefore now the explicit validation gate for that working architecture. New cross-cutting discoveries still use `ASK_ARCHITECT`; ordinary benchmark implementation remains `LOCAL_SOLVE`.
