@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gensigma.example/contracts/business/offering.schema.json",
+  "title": "Offering",
+  "allOf": [
+    {"$ref": "../kernel/canonical-resource.schema.json"},
+    {"type":"object","properties":{
+      "type":{"const":"Offering"},
+      "model_owner":{"const":"business_reality"},
+      "canonical_name":{"type":"string","minLength":1},
+      "offering_kind":{"type":["string","null"]},
+      "owning_unit_ref":{"oneOf":[{"$ref":"../kernel/canonical-ref.schema.json"},{"type":"null"}]},
+      "status":{"type":"string","enum":["planned","active","deprecated","retired","unknown"]}
+    },"required":["canonical_name","status"]}
+  ]
+}
