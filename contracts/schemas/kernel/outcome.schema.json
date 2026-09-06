@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gensigma.example/contracts/kernel/outcome.schema.json",
+  "title": "Outcome",
+  "allOf": [
+    {"$ref": "./canonical-resource.schema.json"},
+    {
+      "type": "object",
+      "properties": {
+        "outcome_type": {"type": "string", "minLength": 1},
+        "subject_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "./canonical-ref.schema.json"}
+        },
+        "outcome_value_or_summary": {},
+        "measurement_period": {
+          "oneOf": [
+            {"$ref": "./effective-time.schema.json"},
+            {"type": "null"}
+          ]
+        },
+        "outcome_status": {
+          "type": "string",
+          "enum": ["observed", "provisional", "confirmed", "revised", "superseded", "unknown"]
+        },
+        "attribution_strength": {
+          "type": ["string", "null"],
+          "enum": [null, "none", "weak", "moderate", "strong", "unknown"]
+        }
+      },
+      "required": ["outcome_type", "subject_refs", "outcome_value_or_summary", "outcome_status"]
+    }
+  ]
+}
