@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gensigma.example/contracts/business/opportunity.schema.json",
+  "title": "Opportunity",
+  "allOf": [
+    {"$ref": "../kernel/canonical-resource.schema.json"},
+    {
+      "type": "object",
+      "properties": {
+        "type": {"const": "Opportunity"},
+        "model_owner": {"const": "business_reality"},
+        "canonical_name": {"type": "string", "minLength": 1},
+        "opportunity_kind": {"type": ["string", "null"]},
+        "commercial_stage": {
+          "type": "string",
+          "enum": ["discovered", "qualifying", "pursuing", "submitted", "awarded", "lost", "cancelled", "dormant", "closed", "unknown"]
+        },
+        "customer_ref": {
+          "oneOf": [
+            {"$ref": "../kernel/canonical-ref.schema.json"},
+            {"type": "null"}
+          ]
+        },
+        "owner_ref": {
+          "oneOf": [
+            {"$ref": "../kernel/canonical-ref.schema.json"},
+            {"type": "null"}
+          ]
+        },
+        "expected_value": {"type": ["number", "null"]},
+        "currency": {"type": ["string", "null"], "minLength": 3, "maxLength": 3},
+        "expected_close_date": {"type": ["string", "null"], "format": "date"}
+      },
+      "required": ["canonical_name", "commercial_stage"]
+    }
+  ]
+}
