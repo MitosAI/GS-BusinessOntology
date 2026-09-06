@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gensigma.example/contracts/kernel/action.schema.json",
+  "title": "Action",
+  "allOf": [
+    {"$ref": "./canonical-resource.schema.json"},
+    {
+      "type": "object",
+      "properties": {
+        "action_type": {"type": "string", "minLength": 1},
+        "actor_ref": {"$ref": "./canonical-ref.schema.json"},
+        "target_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "./canonical-ref.schema.json"}
+        },
+        "context_refs": {
+          "type": "array",
+          "items": {"$ref": "./canonical-ref.schema.json"}
+        },
+        "authorized_by_refs": {
+          "type": "array",
+          "items": {"$ref": "./canonical-ref.schema.json"}
+        },
+        "authority_basis_refs": {
+          "type": "array",
+          "items": {"$ref": "./canonical-ref.schema.json"}
+        },
+        "policy_refs": {
+          "type": "array",
+          "items": {"type": "string"},
+          "uniqueItems": true
+        },
+        "preconditions": {"type": "array", "items": {}},
+        "intended_effects": {"type": "array", "items": {}},
+        "action_status": {
+          "type": "string",
+          "enum": ["proposed", "authorized", "queued", "in_progress", "succeeded", "failed", "cancelled", "compensated", "unknown"]
+        },
+        "requested_at": {"type": ["string", "null"], "format": "date-time"},
+        "started_at": {"type": ["string", "null"], "format": "date-time"},
+        "completed_at": {"type": ["string", "null"], "format": "date-time"},
+        "idempotency_key": {"type": ["string", "null"]},
+        "resulting_event_refs": {
+          "type": "array",
+          "items": {"$ref": "./canonical-ref.schema.json"}
+        },
+        "outcome_refs": {
+          "type": "array",
+          "items": {"$ref": "./canonical-ref.schema.json"}
+        },
+        "failure_reason": {"type": ["string", "null"]},
+        "compensation_action_ref": {
+          "oneOf": [
+            {"$ref": "./canonical-ref.schema.json"},
+            {"type": "null"}
+          ]
+        }
+      },
+      "required": ["action_type", "actor_ref", "target_refs", "context_refs", "action_status"]
+    }
+  ]
+}
