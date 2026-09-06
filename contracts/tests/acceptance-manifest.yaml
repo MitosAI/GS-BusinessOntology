@@ -1,0 +1,139 @@
+version: 0.1.0
+spec: docs/workstreams/koe/11-SEMANTIC-KERNEL-ACCEPTANCE-SPEC-v0.1.md
+status: semantic-assertion-baseline
+
+rules:
+  - id: T01
+    principle: preserve_truth
+    fixtures: [commercial, compliance]
+    assertion: source evidence and prior accepted interpretation remain retrievable after correction
+  - id: T02
+    principle: preserve_truth
+    fixtures: [commercial, delivery]
+    assertion: historical as_of query does not silently project later accepted state backward
+  - id: T03
+    principle: preserve_truth
+    fixtures: [commercial, delivery]
+    assertion: forwarded/copied evidence with shared origin does not count as independent corroboration
+  - id: T04
+    principle: preserve_truth
+    fixtures: [all]
+    assertion: unknown or unresolved can be returned without fabricated default fact
+
+  - id: T05
+    principle: allow_correction
+    fixtures: [identity, workforce]
+    assertion: identity merge can be reversed while preserving source mappings relationships provenance and audit history
+  - id: T06
+    principle: allow_correction
+    fixtures: [commercial]
+    assertion: contextual alias can be corrected without changing unrelated occurrences or creating global alias
+  - id: T07
+    principle: allow_correction
+    fixtures: [commercial, technology]
+    assertion: relationship type or role can be superseded with prior state and effective period preserved
+  - id: T08
+    principle: allow_correction
+    fixtures: [all]
+    assertion: derived projections can be invalidated and rebuilt after canonical correction
+
+  - id: T09
+    principle: stable_core
+    fixtures: [all]
+    assertion: new domain object composes shared kernel contracts rather than redefining identity time evidence security or correction
+  - id: T10
+    principle: stable_core
+    fixtures: [all]
+    assertion: new source contributes evidence/candidates but cannot directly redefine canonical truth
+  - id: T11
+    principle: stable_core
+    fixtures: [commercial, workforce, technology]
+    assertion: new contextual role can be expressed without new Organization or Person identity class
+
+  - id: T12
+    principle: explicit_boundaries
+    fixtures: [commercial, workforce]
+    assertion: source record ingestion does not automatically create or overwrite canonical object
+  - id: T13
+    principle: explicit_boundaries
+    fixtures: [commercial, technology]
+    assertion: one Organization may hold multiple contextual roles without duplicate canonical identity
+  - id: T14
+    principle: explicit_boundaries
+    fixtures: [commercial, delivery]
+    assertion: Event Assessment Decision Approval Action and Outcome remain query-distinguishable
+  - id: T15
+    principle: explicit_boundaries
+    fixtures: [commercial, technology]
+    assertion: Business Intent External Reality Capability and Executive Judgment resources remain model-owned references rather than copied Business Reality truth
+
+  - id: T16
+    principle: identity
+    fixtures: [identity, commercial]
+    assertion: ambiguous identity returns multiple candidates or unresolved result instead of forced match
+  - id: T17
+    principle: identity
+    fixtures: [compliance, workforce]
+    assertion: Organization LegalEntity and OrganizationalUnit remain distinct while linked
+  - id: T18
+    principle: relationship_scope
+    fixtures: [commercial]
+    assertion: scoped Partner role in one Opportunity does not imply enterprise-wide or other-context role
+
+  - id: T19
+    principle: time
+    fixtures: [commercial, compliance]
+    assertion: effective time and discovery or recorded time can differ explicitly
+  - id: T20
+    principle: time
+    fixtures: [all]
+    assertion: hypothetical or scenario state cannot become accepted current state without governed transition
+
+  - id: T21
+    principle: epistemic
+    fixtures: [commercial, finance]
+    assertion: Claim can exist with evidence while canonical state remains unchanged
+  - id: T22
+    principle: epistemic
+    fixtures: [compliance, finance]
+    assertion: contradictory claims coexist with authority time provenance and resolution status preserved
+  - id: T23
+    principle: epistemic
+    fixtures: [commercial]
+    assertion: inferred or reconstructed resource remains labeled distinct from explicit or accepted fact
+
+  - id: T24
+    principle: security
+    fixtures: [workforce, finance, commercial]
+    assertion: unauthorized evidence cannot leak through lookup search traversal timeline trace or derived projection
+  - id: T25
+    principle: authority
+    fixtures: [commercial, finance]
+    assertion: read permission does not grant promotion approval or action authority
+  - id: T26
+    principle: security
+    fixtures: [workforce, commercial]
+    assertion: canonical projection may hide restricted supporting evidence only when explicit policy permits it
+
+  - id: T27
+    principle: cross_domain
+    fixtures: [commercial, delivery]
+    assertion: Opportunity Solicitation Proposal Agreement and Project remain distinct but traversable as one chain
+  - id: T28
+    principle: cross_domain
+    fixtures: [delivery, finance]
+    assertion: Project Deliverable Invoice and Payment remain distinct with traceable time state and evidence
+  - id: T29
+    principle: cross_domain
+    fixtures: [workforce, delivery]
+    assertion: Person Position Skill Credential and Assignment compose without duplicate Person identities
+  - id: T30
+    principle: cross_domain
+    fixtures: [compliance]
+    assertion: LegalEntity Registration Certification jurisdiction dates obligations evidence and corrections are representable
+  - id: T31
+    principle: cross_domain
+    fixtures: [technology]
+    assertion: Organization System Asset Technology and provider/vendor role remain distinct and traversable
+
+completion_rule: every rule must map to at least one concrete fixture assertion before Build 001 is complete
