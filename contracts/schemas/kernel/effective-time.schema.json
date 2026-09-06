@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gensigma.example/contracts/kernel/effective-time.schema.json",
+  "title": "Effective Time",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "valid_from": {"type": ["string", "null"], "format": "date-time"},
+    "valid_to": {"type": ["string", "null"], "format": "date-time"},
+    "precision": {
+      "type": "string",
+      "enum": ["exact", "approximate", "unknown"]
+    }
+  },
+  "required": ["precision"]
+}
