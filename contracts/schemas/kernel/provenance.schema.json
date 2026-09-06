@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gensigma.example/contracts/kernel/provenance.schema.json",
+  "title": "Provenance Reference",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "provenance_id": {"type": "string", "minLength": 1},
+    "source_system": {"type": "string", "minLength": 1},
+    "source_native_id": {"type": ["string", "null"]},
+    "source_version": {"type": ["string", "null"]},
+    "artifact_or_evidence_ref": {
+      "oneOf": [
+        {"$ref": "./canonical-ref.schema.json"},
+        {"type": "null"}
+      ]
+    },
+    "origin_lineage_id": {"type": ["string", "null"]},
+    "extractor_or_actor": {"type": ["string", "null"]},
+    "interpretation_method": {"type": ["string", "null"]},
+    "model_version": {"type": ["string", "null"]},
+    "captured_at": {"type": ["string", "null"], "format": "date-time"},
+    "support_role": {
+      "type": "string",
+      "enum": ["supports", "contradicts", "contextualizes", "derives"]
+    }
+  },
+  "required": ["provenance_id", "source_system", "support_role"]
+}
