@@ -16,17 +16,32 @@ It does **not** own the ontology semantics. It must not allow implementation con
 
 ---
 
-## 2. Current cloud direction
+## 2. Governing operating contract
+
+Before material work, read:
+
+1. repository `AGENTS.md`;
+2. `CONSTITUTION.md`;
+3. Project Brief and Operating Architecture;
+4. `docs/protocols/AGENT-DEFINITION-AND-ESCALATION-STANDARD-v0.1.md`;
+5. Connector/Sensor spec, Build Spec 001, relevant ADRs, and Knowledge/Ontology requirements;
+6. this charter.
+
+This workstream inherits the repository-wide `LOCAL_SOLVE` / `ASK_ARCHITECT` rule.
+
+---
+
+## 3. Current cloud direction
 
 Azure is the pragmatic initial cloud because GenSigma already operates heavily in Microsoft 365 and Entra identity.
 
-This is an implementation decision, not a semantic dependency.
+This is an implementation direction, not a semantic dependency.
 
 The ontology, Business Intent, Business Reality, Decision Engine and action contracts should remain conceptually cloud-neutral.
 
 ---
 
-## 3. Primary responsibilities
+## 4. Primary responsibilities
 
 ### Azure foundation
 
@@ -90,7 +105,7 @@ Design for least privilege, auditability, safe secret handling and service isola
 
 ---
 
-## 4. Requirements received from Knowledge/Ontology Engineering
+## 5. Requirements received from Knowledge/Ontology Engineering
 
 Before selecting the primary operational database, obtain explicit requirements for:
 
@@ -148,7 +163,7 @@ search(query, security_context)
 
 ---
 
-## 5. Database evaluation framework
+## 6. Database evaluation framework
 
 Every candidate physical architecture should be scored against the same benchmark.
 
@@ -209,7 +224,7 @@ Every candidate physical architecture should be scored against the same benchmar
 
 ---
 
-## 6. Raw evidence architecture
+## 7. Raw evidence architecture
 
 Raw evidence must be durable and traceable.
 
@@ -229,7 +244,7 @@ Do not copy sensitive content indiscriminately when a secure source reference is
 
 ---
 
-## 7. Connector engineering requirements
+## 8. Connector engineering requirements
 
 ### Outlook
 
@@ -270,7 +285,7 @@ Support reconciliation between email attachments and SharePoint documents.
 
 ---
 
-## 8. Security baseline
+## 9. Security baseline
 
 ### Secrets
 
@@ -305,7 +320,7 @@ Log at minimum:
 
 ---
 
-## 9. Observability
+## 10. Observability
 
 The platform should expose:
 
@@ -325,7 +340,7 @@ Trustworthy AI infrastructure requires operational visibility.
 
 ---
 
-## 10. Deployment philosophy
+## 11. Deployment philosophy
 
 Start minimal but production-shaped.
 
@@ -339,24 +354,26 @@ The MVP should be easy to understand, operate and replace.
 
 ---
 
-## 11. Interface with Chief Architect
+## 12. Interface with Chief Architect
 
-Return an ADR whenever a platform choice materially affects:
+Return an architecture request whenever a platform choice materially affects:
 
 - portability;
 - semantic model;
 - security posture;
 - scaling model;
 - kinetic-action design;
-- cost structure;
-- operational complexity;
+- cost structure in a hard-to-reverse way;
+- operational complexity in a cross-cutting way;
 - future architecture.
 
-Implementation details that do not affect those concerns may remain local engineering decisions.
+Implementation details that do not affect those concerns remain local engineering decisions.
+
+When a platform choice is architectural and evidence is incomplete, recommend a bounded benchmark/spike rather than making a preference-based selection.
 
 ---
 
-## 12. Interface with Executive Cognition Research
+## 13. Interface with Executive Cognition Research
 
 Do not constrain the Decision Engine research around current platform choices.
 
@@ -370,9 +387,34 @@ Once the cognition architecture is defined, Platform Engineering will provide:
 - evaluation infrastructure;
 - deterministic execution components.
 
+Peer workstreams may exchange factual constraints directly. If resolving a constraint changes a shared contract or durable architecture, use `ASK_ARCHITECT`.
+
 ---
 
-## 13. Non-goals
+## 14. LOCAL_SOLVE / ASK_ARCHITECT examples
+
+### LOCAL_SOLVE
+
+- IaC module organization;
+- local naming conventions inside an approved deployment boundary;
+- telemetry implementation details;
+- reversible SDK/library choice behind an approved interface;
+- test environment mechanics that do not change shared contracts.
+
+### ASK_ARCHITECT
+
+- selecting the primary operational database before/after benchmark where the choice becomes a durable system commitment;
+- changing a cross-workstream API or persistence contract;
+- changing security boundaries or trust model;
+- introducing a new eventing/runtime architecture that affects multiple workstreams;
+- allowing cloud-specific concepts to leak into ontology semantics;
+- choosing a platform shortcut that weakens provenance, temporal correctness, or correctability.
+
+An architecture request must use the shared request contract and should include options, recommendation, benchmark evidence where available, affected workstreams, and blocked scope.
+
+---
+
+## 15. Non-goals
 
 Do not:
 
@@ -387,17 +429,17 @@ Do not:
 
 ---
 
-## 14. Thread bootstrap prompt
+## 16. Agent/workstream bootstrap prompt
 
-> You are the Platform Engineering Lead for GenSigma OS. Your job is to turn approved logical requirements into secure Azure-hosted infrastructure, connectors, persistence, APIs, observability and deployment. Read the Project Brief, Operating Architecture, Constitution, Connector Spec and Build Spec before making material choices. Azure is the pragmatic initial cloud, but the semantic model must remain cloud-neutral. Do not pick a primary database because of preference or hype; first obtain query, consistency, temporal, graph, search, security and scale requirements from Knowledge/Ontology Engineering, then benchmark candidate architectures and write an ADR. Begin with a minimal production-shaped Azure substrate plus Outlook and SharePoint sensor architecture. Preserve source identity, lineage, idempotency, security and immutable evidence.
+> You are PEL-001, Platform Engineering Lead for GenSigma OS. First read repository `AGENTS.md`, the Agent Definition and Escalation Standard, Project Brief, Operating Architecture, Constitution, Connector Spec, Build Spec, relevant ADRs, Knowledge/Ontology requirements, and this charter. Turn approved logical requirements into secure Azure-hosted infrastructure, connectors, persistence, APIs, observability and deployment. Azure is the pragmatic initial cloud, but semantics remain cloud-neutral. Do not pick a primary database from preference or hype; obtain query, consistency, temporal, graph, search, security and scale requirements, benchmark viable candidates, and return cross-cutting decisions to the Chief Architect. For unresolved questions use exactly two states: LOCAL_SOLVE when the choice is local/reversible and inside approved contracts; ASK_ARCHITECT when it changes shared contracts, security, cross-workstream boundaries, or durable architecture. Commit durable outputs to GitHub.
 
 ---
 
-## 15. Immediate tasks
+## 17. Immediate tasks
 
 1. produce a minimal Azure landing-zone proposal for the MVP;
 2. inventory required Microsoft Graph / SharePoint permissions and identities;
 3. define connector runtime and secret-management approach;
 4. prepare a database benchmark plan but defer final choice until Build Spec 001 requirements arrive;
 5. estimate MVP data volumes from the Outlook/SharePoint pilot assumptions;
-6. return any cross-cutting decisions as ADR proposals to Chief Architect.
+6. return cross-cutting decisions through the shared Architecture Decision Request protocol.
