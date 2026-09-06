@@ -1,6 +1,6 @@
 # KOE Governance Reconciliation and Build Status
 
-**Version:** v0.2  
+**Version:** v0.3  
 **Status:** Active checkpoint  
 **Owner:** Knowledge & Ontology Engineering (KOE-001)
 
@@ -137,14 +137,15 @@ The reference kernel is not a production authorization boundary and must not sil
 
 At the latest reconciliation:
 
-- PR #3: OPEN, KOE semantic foundation, currently non-mergeable because the branch has diverged from `main`;
+- PR #3: OPEN, KOE semantic foundation; GitHub currently reports it mergeable, but the branch is materially diverged from `main` and should be reconciled/rebased before clean integration;
 - KOE branch: `workstream/koe-first-session-v0.1`;
 - PR #7: OPEN, stacked on the KOE branch, currently non-mergeable until its base dependency is reconciled;
 - runtime branch: `build/reference-business-reality-kernel-v0.1`;
 - Issue #16: OPEN, bounded promotion/type-contract fixes;
+- Issue #21: OPEN / ASK_ARCHITECT, reconciles older shared ADR-016 25–35 wording with current KOE ~30–40 guardrail;
 - Issue #5: CLOSED / DECIDED by ADR-002.
 
-The KOE branch must be reconciled/rebased with `main` before merge. PR #7 must then be retargeted/rebased appropriately.
+Re-check live PR/branch status before merge because these fields change as branches advance.
 
 ---
 
@@ -175,13 +176,14 @@ Do not claim runtime PASS yet for:
 
 ## 10. BLOCKED / gated work
 
-- merging PR #3 is blocked by branch reconciliation/conflicts, not by a new semantic architecture question;
+- PR #3 is not semantically blocked, but clean integration is process-gated by reconciliation with current `main` so newer governance is not overwritten;
 - PR #7 integration is gated by PR #3/base reconciliation;
 - production persistence/search/cloud topology remains gated by Platform benchmark evidence and architecture decision;
+- changing shared ADR-016 count wording is gated by Issue #21 / CA-001;
 - authoritative BUILD SPEC 001 pilot/scope integration remains Chief Architect-owned, using KOE's minimum-subset recommendation as input.
 
 ## 11. Architecture questions
 
-No unresolved KOE architecture request currently blocks normal work.
+Issue #21 is the only current KOE ASK_ARCHITECT item discovered by the transition audit; it is not build-blocking.
 
 Open semantic questions in `contracts/OPEN-SEMANTIC-QUESTIONS.md` remain tentative/local rules unless a future implementation need turns one into a shared-architecture decision.
