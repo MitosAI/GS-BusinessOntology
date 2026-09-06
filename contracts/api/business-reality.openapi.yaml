@@ -1,0 +1,635 @@
+openapi: 3.1.0
+info:
+  title: GenSigma Business Reality Contract API
+  version: 0.1.0
+  description: |
+    Technology-neutral logical API for Build Spec 001. This contract defines
+    semantic request/response behavior and does not select runtime, database,
+    graph engine, or deployment architecture.
+servers: []
+
+paths:
+  /objects/{id}:
+    get:
+      operationId: getObject
+      parameters:
+        - $ref: '#/components/parameters/ObjectId'
+        - $ref: '#/components/parameters/AsOf'
+        - $ref: '#/components/parameters/ContractVersion'
+      responses:
+        '200':
+          description: Semantic result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceResponse'
+
+  /identity/resolve:
+    post:
+      operationId: resolveIdentity
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IdentityResolutionRequest'
+      responses:
+        '200':
+          description: Resolution outcome, including ambiguity/unresolved states
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityResolutionResponse'
+
+  /objects/{id}/relationships:
+    get:
+      operationId: getRelationships
+      parameters:
+        - $ref: '#/components/parameters/ObjectId'
+        - $ref: '#/components/parameters/AsOf'
+        - name: relationship_type
+          in: query
+          schema: {type: string}
+        - name: scope_id
+          in: query
+          schema: {type: string}
+      responses:
+        '200':
+          description: Relationship result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RelationshipListResponse'
+
+  /objects/{id}/neighbors:
+    get:
+      operationId: getNeighbors
+      parameters:
+        - $ref: '#/components/parameters/ObjectId'
+        - $ref: '#/components/parameters/AsOf'
+        - name: depth
+          in: query
+          required: true
+          schema: {type: integer, minimum: 1, maximum: 10}
+      responses:
+        '200':
+          description: Bounded traversal result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceListResponse'
+
+  /objects/{id}/state:
+    get:
+      operationId: getState
+      parameters:
+        - $ref: '#/components/parameters/ObjectId'
+        - $ref: '#/components/parameters/AsOf'
+        - name: temporal_mode
+          in: query
+          schema:
+            type: string
+            enum: [effective_using_current_knowledge, accepted_as_recorded_at_time]
+      responses:
+        '200':
+          description: Current or historical state outcome
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceResponse'
+
+  /contexts/{id}/timeline:
+    get:
+      operationId: getTimeline
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: string}
+        - name: from
+          in: query
+          schema: {type: string, format: date-time}
+        - name: to
+          in: query
+          schema: {type: string, format: date-time}
+      responses:
+        '200':
+          description: Ordered Event/Decision/Approval/Action/Outcome timeline
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceListResponse'
+
+  /resources/{id}/evidence:
+    get:
+      operationId: getEvidence
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: string}
+      responses:
+        '200':
+          description: Security-filtered provenance/evidence
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProvenanceListResponse'
+
+  /decisions/{id}/trace:
+    get:
+      operationId: getDecisionTrace
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: string}
+      responses:
+        '200':
+          description: Evidence-to-outcome decision trace
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceListResponse'
+
+  /contradictions/search:
+    post:
+      operationId: findContradictions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScopeSearchRequest'
+      responses:
+        '200':
+          description: Contradiction search outcome
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceListResponse'
+
+  /candidates/unresolved/search:
+    post:
+      operationId: findUnresolvedCandidates
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScopeSearchRequest'
+      responses:
+        '200':
+          description: Unresolved candidate queue
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceListResponse'
+
+  /search:
+    post:
+      operationId: search
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+      responses:
+        '200':
+          description: Security-aware governed search
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceListResponse'
+
+  /proposals/objects:
+    post:
+      operationId: proposeObject
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProposalRequest'
+      responses:
+        '200':
+          description: Proposal accepted/rejected; canonical state is not implied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MutationResponse'
+
+  /proposals/relationships:
+    post:
+      operationId: proposeRelationship
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/kernel/typed-relationship.schema.json'
+      responses:
+        '200':
+          description: Relationship proposal outcome
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MutationResponse'
+
+  /proposals/claims:
+    post:
+      operationId: proposeClaim
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/business/claim.schema.json'
+      responses:
+        '200':
+          description: Claim proposal outcome
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MutationResponse'
+
+  /proposals/events:
+    post:
+      operationId: proposeEvent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/kernel/event.schema.json'
+      responses:
+        '200':
+          description: Event proposal outcome
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MutationResponse'
+
+  /identity/merge-proposals:
+    post:
+      operationId: proposeMerge
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IdentityChangeRequest'
+      responses:
+        '200':
+          description: Merge proposal outcome
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MutationResponse'
+
+  /identity/split-proposals:
+    post:
+      operationId: proposeSplit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IdentityChangeRequest'
+      responses:
+        '200':
+          description: Split proposal outcome
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MutationResponse'
+
+  /candidates/{id}/promote:
+    post:
+      operationId: promoteCandidate
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: string}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromotionRequest'
+      responses:
+        '200':
+          description: Governed promotion outcome
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MutationResponse'
+
+  /candidates/{id}/reject:
+    post:
+      operationId: rejectCandidate
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: string}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromotionRequest'
+      responses:
+        '200':
+          description: Candidate rejection outcome
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MutationResponse'
+
+  /corrections:
+    post:
+      operationId: correctCanonicalInterpretation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CorrectionRequest'
+      responses:
+        '200':
+          description: Audited correction/supersession outcome
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MutationResponse'
+
+components:
+  parameters:
+    ObjectId:
+      name: id
+      in: path
+      required: true
+      schema: {type: string}
+    AsOf:
+      name: as_of
+      in: query
+      schema: {type: string, format: date-time}
+    ContractVersion:
+      name: contract_version
+      in: header
+      schema: {type: string}
+
+  schemas:
+    ResultStatus:
+      type: string
+      enum:
+        - ok
+        - partial
+        - unknown
+        - unresolved
+        - ambiguous
+        - contradicted
+        - superseded
+        - conflict
+        - forbidden
+        - not_found
+        - invalid_request
+        - invalid_transition
+        - unauthorized_action
+        - contract_version_mismatch
+
+    SemanticIssue:
+      type: object
+      additionalProperties: false
+      properties:
+        code: {type: string}
+        message: {type: string}
+        resource_refs:
+          type: array
+          items:
+            $ref: '../schemas/kernel/canonical-ref.schema.json'
+      required: [code, message]
+
+    ResponseBase:
+      type: object
+      additionalProperties: true
+      properties:
+        result_status:
+          $ref: '#/components/schemas/ResultStatus'
+        request_id: {type: string}
+        contract_version: {type: string}
+        issues:
+          type: array
+          items:
+            $ref: '#/components/schemas/SemanticIssue'
+      required: [result_status, request_id, contract_version, issues]
+
+    ResourceResponse:
+      allOf:
+        - $ref: '#/components/schemas/ResponseBase'
+        - type: object
+          properties:
+            data:
+              oneOf:
+                - $ref: '../schemas/kernel/canonical-resource.schema.json'
+                - type: 'null'
+
+    ResourceListResponse:
+      allOf:
+        - $ref: '#/components/schemas/ResponseBase'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '../schemas/kernel/canonical-resource.schema.json'
+            completeness:
+              type: string
+              enum: [complete, bounded, security_filtered, partial_dependency_failure]
+          required: [data]
+
+    RelationshipListResponse:
+      allOf:
+        - $ref: '#/components/schemas/ResponseBase'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '../schemas/kernel/typed-relationship.schema.json'
+          required: [data]
+
+    ProvenanceListResponse:
+      allOf:
+        - $ref: '#/components/schemas/ResponseBase'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '../schemas/kernel/provenance.schema.json'
+          required: [data]
+
+    IdentityResolutionRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        reference: {type: string}
+        context_refs:
+          type: array
+          items:
+            $ref: '../schemas/kernel/canonical-ref.schema.json'
+        as_of: {type: [string, 'null'], format: date-time}
+        security_context:
+          $ref: '../schemas/kernel/security-context.schema.json'
+      required: [reference, context_refs, security_context]
+
+    IdentityCandidate:
+      type: object
+      additionalProperties: false
+      properties:
+        canonical_ref:
+          $ref: '../schemas/kernel/canonical-ref.schema.json'
+        rationale: {type: string}
+        evidence_refs:
+          type: array
+          items:
+            $ref: '../schemas/kernel/provenance.schema.json'
+      required: [canonical_ref, rationale, evidence_refs]
+
+    IdentityResolutionResponse:
+      allOf:
+        - $ref: '#/components/schemas/ResponseBase'
+        - type: object
+          properties:
+            accepted_match:
+              oneOf:
+                - $ref: '#/components/schemas/IdentityCandidate'
+                - type: 'null'
+            candidates:
+              type: array
+              items:
+                $ref: '#/components/schemas/IdentityCandidate'
+          required: [candidates]
+
+    SearchRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        query: {type: string}
+        filters: {type: object, additionalProperties: true}
+        as_of: {type: [string, 'null'], format: date-time}
+        security_context:
+          $ref: '../schemas/kernel/security-context.schema.json'
+      required: [query, filters, security_context]
+
+    ScopeSearchRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        scope_refs:
+          type: array
+          items:
+            $ref: '../schemas/kernel/canonical-ref.schema.json'
+        filters: {type: object, additionalProperties: true}
+        security_context:
+          $ref: '../schemas/kernel/security-context.schema.json'
+      required: [scope_refs, filters, security_context]
+
+    ProposalRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        proposed_resource:
+          $ref: '../schemas/kernel/canonical-resource.schema.json'
+        rationale: {type: string}
+        security_context:
+          $ref: '../schemas/kernel/security-context.schema.json'
+      required: [proposed_resource, rationale, security_context]
+
+    IdentityChangeRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        identity_refs:
+          type: array
+          minItems: 1
+          items:
+            $ref: '../schemas/kernel/canonical-ref.schema.json'
+        rationale: {type: string}
+        evidence_refs:
+          type: array
+          items:
+            $ref: '../schemas/kernel/provenance.schema.json'
+        security_context:
+          $ref: '../schemas/kernel/security-context.schema.json'
+      required: [identity_refs, rationale, evidence_refs, security_context]
+
+    PromotionRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        rationale: {type: string}
+        approval_refs:
+          type: array
+          items:
+            $ref: '../schemas/kernel/canonical-ref.schema.json'
+        security_context:
+          $ref: '../schemas/kernel/security-context.schema.json'
+      required: [rationale, approval_refs, security_context]
+
+    CorrectionRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        target_ref:
+          $ref: '../schemas/kernel/canonical-ref.schema.json'
+        replacement_resource:
+          $ref: '../schemas/kernel/canonical-resource.schema.json'
+        correction_type:
+          type: string
+          enum:
+            - state_correction
+            - identity_merge
+            - identity_split
+            - reclassification
+            - relationship_correction
+            - time_correction
+            - provenance_correction
+            - security_correction
+            - semantic_migration
+        reason: {type: string}
+        effective_correction_time: {type: [string, 'null'], format: date-time}
+        security_context:
+          $ref: '../schemas/kernel/security-context.schema.json'
+      required: [target_ref, replacement_resource, correction_type, reason, security_context]
+
+    MutationResponse:
+      allOf:
+        - $ref: '#/components/schemas/ResponseBase'
+        - type: object
+          properties:
+            proposal_id: {type: [string, 'null']}
+            changed_resource_refs:
+              type: array
+              items:
+                $ref: '../schemas/kernel/canonical-ref.schema.json'
+            prior_version_refs:
+              type: array
+              items:
+                $ref: '../schemas/kernel/canonical-ref.schema.json'
+            new_version_refs:
+              type: array
+              items:
+                $ref: '../schemas/kernel/canonical-ref.schema.json'
+            required_approvals:
+              type: array
+              items:
+                $ref: '../schemas/kernel/canonical-ref.schema.json'
+            next_allowed_actions:
+              type: array
+              items: {type: string}
+          required: [changed_resource_refs, prior_version_refs, new_version_refs, required_approvals, next_allowed_actions]
