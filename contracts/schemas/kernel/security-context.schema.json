@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gensigma.example/contracts/kernel/security-context.schema.json",
+  "title": "Actor Security Context",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "actor_id": {"type": "string", "minLength": 1},
+    "actor_type": {
+      "type": "string",
+      "enum": ["human", "service", "agent", "system"]
+    },
+    "principal_refs": {
+      "type": "array",
+      "items": {"type": "string"},
+      "uniqueItems": true
+    },
+    "role_refs": {
+      "type": "array",
+      "items": {"type": "string"},
+      "uniqueItems": true
+    },
+    "delegation_refs": {
+      "type": "array",
+      "items": {"type": "string"},
+      "uniqueItems": true
+    },
+    "policy_context": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "requested_at": {"type": "string", "format": "date-time"}
+  },
+  "required": ["actor_id", "actor_type", "principal_refs", "role_refs", "delegation_refs", "requested_at"]
+}
