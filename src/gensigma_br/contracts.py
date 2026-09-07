@@ -26,6 +26,7 @@ def _schema_name(semantic_type: str) -> str:
 class ContractRegistry:
     """Loads the repository's JSON Schema contracts without choosing a runtime database."""
 
+    # TypedRelationship is a reusable shape, not a promotable semantic identity.
     _KERNEL_CANONICAL_TYPES = frozenset(
         {"Event", "Assessment", "Decision", "Approval", "Action", "Outcome"}
     )
