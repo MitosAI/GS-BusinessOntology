@@ -7,6 +7,7 @@ import copy
 import hashlib
 import json
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 from types import MappingProxyType
 from typing import Any, Mapping
@@ -39,6 +40,18 @@ DIGESTED_CONTRACTS = frozenset(
 
 class BenchmarkContractViolation(ValueError):
     """Raised when a benchmark artifact violates its local evaluation contract."""
+
+
+class FrozenCaseLoadError(BenchmarkContractViolation):
+    """Raised when a frozen case cannot produce a valid evaluation-arm input."""
+
+    def __init__(self, message: str, audit: tuple["ValidationAuditEntry", ...]) -> None:
+        super().__init__(message)
+        self.audit = audit
+
+
+class HindsightLeakageViolation(FrozenCaseLoadError):
+    """Raised when an input contains evidence beyond its decision-time boundary."""
 
 
 def canonical_json(value: Any) -> str:
@@ -96,6 +109,24 @@ class ArmInput:
     decision_input: Mapping[str, Any]
     evidence: tuple[Mapping[str, Any], ...]
     case_digest: str
+
+
+@dataclass(frozen=True)
+class ValidationAuditEntry:
+    rule_id: str
+    status: str
+    message: str
+    case_id: str
+    evidence_id: str | None = None
+    field: str | None = None
+    observed_value: str | None = None
+    boundary: str | None = None
+
+
+@dataclass(frozen=True)
+class FrozenCaseLoad:
+    arm_input: ArmInput
+    audit: tuple[ValidationAuditEntry, ...]
 
 
 class CognitionContractRegistry:
@@ -210,6 +241,109 @@ class CognitionContractRegistry:
             evidence=tuple(_freeze(copy.deepcopy(item)) for item in decision_case["evidence"]),
             case_digest=stable_digest(decision_case),
         )
+
+
+def _parse_rfc3339(value: str) -> datetime:
+    parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    if parsed.tzinfo is None or parsed.utcoffset() is None:
+        raise ValueError("timestamp must include a UTC offset")
+    return parsed
+
+
+class FrozenCaseLoader:
+    """Create a time-correct arm input and retain validation audit evidence."""
+
+    def __init__(self, contracts: CognitionContractRegistry | None = None) -> None:
+        self.contracts = contracts or CognitionContractRegistry()
+
+    def load(self, path: str | Path) -> FrozenCaseLoad:
+        case_path = Path(path)
+        try:
+            value = json.loads(case_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            audit = (
+                ValidationAuditEntry(
+                    rule_id="frozen-case-json",
+                    status="failed",
+                    message=str(exc),
+                    case_id="unknown",
+                ),
+            )
+            raise FrozenCaseLoadError(
+                f"Unable to load frozen DecisionCase from {case_path}: {exc}", audit
+            ) from exc
+        return self.load_case(value)
+
+    def load_case(self, decision_case: Mapping[str, Any]) -> FrozenCaseLoad:
+        audit: list[ValidationAuditEntry] = []
+        case_id = str(decision_case.get("case_id", "unknown"))
+        try:
+            self.contracts.validate("DecisionCase", decision_case)
+        except BenchmarkContractViolation as exc:
+            audit.append(
+                ValidationAuditEntry(
+                    rule_id="decision-case-contract",
+                    status="failed",
+                    message=str(exc),
+                    case_id=case_id,
+                )
+            )
+            raise FrozenCaseLoadError(str(exc), tuple(audit)) from exc
+
+        audit.append(
+            ValidationAuditEntry(
+                rule_id="decision-case-contract",
+                status="passed",
+                message="DecisionCase contract and references are valid.",
+                case_id=case_id,
+            )
+        )
+        boundary_text = decision_case["as_of"]
+        boundary = _parse_rfc3339(boundary_text)
+        for evidence in decision_case["evidence"]:
+            for field in ("available_at", "effective_at"):
+                timestamp_text = evidence[field]
+                timestamp = _parse_rfc3339(timestamp_text)
+                if timestamp > boundary:
+                    entry = ValidationAuditEntry(
+                        rule_id="evidence-as-of-boundary",
+                        status="failed",
+                        message=f"{field} is later than DecisionCase.as_of.",
+                        case_id=case_id,
+                        evidence_id=evidence["evidence_id"],
+                        field=field,
+                        observed_value=timestamp_text,
+                        boundary=boundary_text,
+                    )
+                    audit.append(entry)
+                    raise HindsightLeakageViolation(
+                        "DecisionCase hindsight leakage at evidence "
+                        f"{evidence['evidence_id']}.{field}: {timestamp_text} > {boundary_text}",
+                        tuple(audit),
+                    )
+                audit.append(
+                    ValidationAuditEntry(
+                        rule_id="evidence-as-of-boundary",
+                        status="passed",
+                        message=f"{field} is within DecisionCase.as_of.",
+                        case_id=case_id,
+                        evidence_id=evidence["evidence_id"],
+                        field=field,
+                        observed_value=timestamp_text,
+                        boundary=boundary_text,
+                    )
+                )
+
+        arm_input = self.contracts.arm_input(decision_case)
+        audit.append(
+            ValidationAuditEntry(
+                rule_id="outcome-withholding",
+                status="passed",
+                message="Normal ArmInput contains no held-out outcome surface.",
+                case_id=case_id,
+            )
+        )
+        return FrozenCaseLoad(arm_input=arm_input, audit=tuple(audit))
 
 
 def main() -> None:

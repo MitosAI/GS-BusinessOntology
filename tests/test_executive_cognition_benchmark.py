@@ -9,6 +9,9 @@ import pytest
 from gensigma_benchmarks.executive_cognition import (
     BenchmarkContractViolation,
     CognitionContractRegistry,
+    FrozenCaseLoadError,
+    FrozenCaseLoader,
+    HindsightLeakageViolation,
     canonical_json,
     immutable_result_identity,
     seal_result,
@@ -92,6 +95,73 @@ def test_normal_arm_input_excludes_outcome_and_is_immutable(
     assert "outcome" not in arm_input.decision_input
     with pytest.raises(TypeError):
         arm_input.decision_input["outcome"] = {"award_result": "loss"}
+
+
+def test_frozen_case_loader_returns_time_correct_arm_input_and_audit(
+    contracts: CognitionContractRegistry,
+) -> None:
+    loaded = FrozenCaseLoader(contracts).load(
+        FIXTURES / "bid-no-bid-valid.json"
+    )
+
+    assert loaded.arm_input.case_id == "synthetic-bid-001"
+    assert loaded.arm_input.as_of == "2026-08-15T17:00:00Z"
+    assert len(loaded.arm_input.evidence) == 1
+    assert all(entry.status == "passed" for entry in loaded.audit)
+    assert {entry.rule_id for entry in loaded.audit} == {
+        "decision-case-contract",
+        "evidence-as-of-boundary",
+        "outcome-withholding",
+    }
+
+
+def test_post_as_of_availability_is_rejected_with_audit_metadata(
+    contracts: CognitionContractRegistry,
+) -> None:
+    loader = FrozenCaseLoader(contracts)
+    with pytest.raises(HindsightLeakageViolation) as caught:
+        loader.load(FIXTURES / "invalid/post-as-of-evidence.json")
+
+    failure = caught.value.audit[-1]
+    assert failure.status == "failed"
+    assert failure.evidence_id == "evidence-late-001"
+    assert failure.field == "available_at"
+    assert failure.boundary == "2026-08-15T17:00:00Z"
+
+
+def test_post_as_of_effective_time_is_rejected(
+    contracts: CognitionContractRegistry,
+) -> None:
+    case = load_fixture("bid-no-bid-valid.json")
+    case["evidence"][0]["effective_at"] = "2026-08-16T09:00:00Z"
+
+    with pytest.raises(HindsightLeakageViolation, match="effective_at"):
+        FrozenCaseLoader(contracts).load_case(case)
+
+
+def test_missing_evidence_time_fails_explicitly_with_audit(
+    contracts: CognitionContractRegistry,
+) -> None:
+    case = load_fixture("bid-no-bid-valid.json")
+    del case["evidence"][0]["available_at"]
+
+    with pytest.raises(FrozenCaseLoadError) as caught:
+        FrozenCaseLoader(contracts).load_case(case)
+
+    assert "available_at" in str(caught.value)
+    assert caught.value.audit[-1].rule_id == "decision-case-contract"
+    assert caught.value.audit[-1].status == "failed"
+
+
+def test_loader_arm_input_has_no_held_out_outcome_surface(
+    contracts: CognitionContractRegistry,
+) -> None:
+    loaded = FrozenCaseLoader(contracts).load_case(
+        load_fixture("bid-no-bid-valid.json")
+    )
+
+    assert not hasattr(loaded.arm_input, "held_out_outcome")
+    assert "held_out_outcome" not in loaded.arm_input.decision_input
 
 
 def test_repeated_runs_have_distinct_immutable_identities(

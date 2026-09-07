@@ -1,0 +1,28 @@
+{
+  "as_of": "2026-08-15T17:00:00Z",
+  "case_id": "invalid-post-as-of-evidence",
+  "case_version": "1.0.0",
+  "contract_version": "decision-case/0.1",
+  "decision_class": "bid_no_bid",
+  "decision_input": {
+    "context": {},
+    "context_version": "decision-context-projection/0.1",
+    "evidence_refs": ["evidence-late-001"],
+    "uncertainties": [],
+    "unknowns": []
+  },
+  "evidence": [
+    {
+      "available_at": "2026-08-16T09:00:00Z",
+      "content_ref": "evidence://synthetic/late-001",
+      "effective_at": "2026-08-14T09:00:00Z",
+      "epistemic_status": "observed",
+      "evidence_id": "evidence-late-001",
+      "evidence_version": "1.0.0",
+      "provenance_refs": ["raw-evidence-late-001"],
+      "source_ref": "sharepoint://synthetic/late-001",
+      "summary": "Synthetic evidence discovered after the decision cutoff"
+    }
+  ],
+  "question": "Should the organization bid?"
+}

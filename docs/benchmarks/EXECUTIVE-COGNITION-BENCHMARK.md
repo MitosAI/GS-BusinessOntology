@@ -38,6 +38,19 @@ contract error on failure. The committed invalid fixtures cover missing time,
 mixed input/outcome data, an unresolved evidence reference, and an incomplete run
 manifest.
 
+## Frozen-case Loading
+
+`FrozenCaseLoader` validates the Issue #11 contract, then checks every decision-time
+evidence reference against `DecisionCase.as_of`. Both `available_at` and
+`effective_at` must be no later than the boundary. Missing timestamps fail contract
+validation; later timestamps raise `HindsightLeakageViolation`.
+
+Successful loads return `FrozenCaseLoad`, containing an immutable, outcome-free
+`ArmInput` and ordered `ValidationAuditEntry` records. Failed loads attach the audit
+entries accumulated before rejection to `FrozenCaseLoadError`. These rules are
+benchmark replay mechanics only and do not redefine canonical temporal or
+provenance semantics.
+
 ## Downstream Interfaces
 
 - Issue #12 consumes `DecisionCase` and returns `ArmInput`. It must enforce
