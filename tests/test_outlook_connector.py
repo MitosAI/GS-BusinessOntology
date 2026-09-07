@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from datetime import datetime, timezone
+from urllib.parse import parse_qs, urlparse
 
 import pytest
 
@@ -131,6 +132,55 @@ def test_resume_uses_saved_opaque_link_and_commits_only_completed_delta_link() -
 
     assert transport.requests[0][1] == saved
     assert store.get(key) == FINAL_INBOX
+
+
+def test_initial_delta_request_can_be_bounded_by_received_time() -> None:
+    transport = FakeTransport(
+        [response(200, {"value": [], "@odata.deltaLink": FINAL_INBOX})]
+    )
+    outlook, _ = sensor(transport)
+
+    outlook.sync_folder(
+        "inbox",
+        ingestion_run_id="run-bounded",
+        received_after=datetime(2026, 9, 1, 8, 30, tzinfo=timezone.utc),
+    )
+
+    query = parse_qs(urlparse(transport.requests[0][1]).query)
+    assert query["$filter"] == ["receivedDateTime ge 2026-09-01T08:30:00Z"]
+    assert query["$orderby"] == ["receivedDateTime desc"]
+
+
+def test_saved_delta_link_remains_opaque_when_time_bound_is_supplied() -> None:
+    saved = "https://graph.microsoft.com/v1.0/saved?$deltatoken=opaque%2Fstate"
+    store = InMemoryCheckpointStore()
+    key = "outlook:tenant-1:evidence@example.com:folder:inbox"
+    store.put(key, saved)
+    transport = FakeTransport(
+        [response(200, {"value": [], "@odata.deltaLink": FINAL_INBOX})]
+    )
+    outlook, _ = sensor(transport, store)
+
+    outlook.sync_folder(
+        "inbox",
+        ingestion_run_id="run-resume-bounded",
+        received_after=datetime(2026, 9, 1, tzinfo=timezone.utc),
+    )
+
+    assert transport.requests[0][1] == saved
+
+
+def test_time_bound_must_be_timezone_aware() -> None:
+    transport = FakeTransport([])
+    outlook, _ = sensor(transport)
+
+    with pytest.raises(ValueError, match="timezone-aware"):
+        outlook.sync_folder(
+            "inbox",
+            ingestion_run_id="run-naive-time",
+            received_after=datetime(2026, 9, 1),
+        )
+    assert transport.requests == []
 
 
 @pytest.mark.parametrize("bad_item", [{}, {"id": "1"}, {"id": 123, "changeKey": "v1"}])
