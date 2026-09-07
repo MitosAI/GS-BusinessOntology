@@ -507,3 +507,17 @@ def test_second_promotion_cannot_bypass_canonical_correction_history() -> None:
             actor="relationship-reviewer",
             reason="Should not bypass correction history",
         )
+
+
+def test_relationship_requires_two_distinct_canonical_participants() -> None:
+    kernel, left, right, _, relationship = setup_relationship_kernel()
+    relationship["participants"][1]["participant_ref"] = canonical_ref(left)
+    relationship["participants"][1]["contextual_role"] = "PrimeContractor"
+
+    with pytest.raises(RelationshipInvariantViolation, match="two distinct"):
+        kernel.promote_candidate(
+            "cand-rel-001",
+            relationship,
+            actor="relationship-reviewer",
+            reason="Should fail self-only relationship",
+        )
