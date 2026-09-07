@@ -38,10 +38,15 @@ class WorkloadResult:
 
 class BenchmarkAdapter(Protocol):
     def resolve_identity(self, alias: str) -> list[str]: ...
+
     def get_neighbors(self, resource_id: str, depth: int) -> list[str]: ...
+
     def get_evidence(self, resource_id: str) -> list[str]: ...
+
     def promote(self, candidate_id: str, resource_id: str) -> str: ...
+
     def correct(self, resource_id: str, revision: str) -> list[str]: ...
+
     def get_state_as_of(self, resource_id: str, as_of: str) -> str | None: ...
 
 
@@ -50,6 +55,7 @@ def build_fixture(scale: str) -> Fixture:
         factor = SCALE_FACTORS[scale]
     except KeyError as exc:
         raise ValueError(f"unknown scale {scale!r}; choose {sorted(SCALE_FACTORS)}") from exc
+
     identities: list[dict[str, Any]] = []
     relationships: list[dict[str, str]] = []
     evidence: list[dict[str, str]] = []
@@ -109,7 +115,9 @@ class ReferenceAdapter:
     def __init__(self, fixture: Fixture) -> None:
         self.fixture = fixture
         self._aliases = {
-            alias: item["id"] for item in fixture.identities for alias in item["aliases"]
+            alias: item["id"]
+            for item in fixture.identities
+            for alias in item["aliases"]
         }
         self._edges = [(edge["from"], edge["to"]) for edge in fixture.relationships]
         self._evidence = fixture.evidence
@@ -172,26 +180,32 @@ class BenchmarkRunner:
     def run(self) -> dict[str, Any]:
         factor = SCALE_FACTORS[self.fixture.scale]
         workloads: list[WorkloadResult] = []
+
         identity_results = [self.adapter.resolve_identity(f"C{i}") for i in range(factor)]
         workloads.append(self._complete("canonical_identity_lookup", factor, identity_results))
+
         traversal_results = [
             self.adapter.get_neighbors(f"org-{i:03d}", 2) for i in range(factor)
         ]
         workloads.append(self._complete("typed_relationship_neighborhood", factor, traversal_results))
+
         evidence_results = [
             self.adapter.get_evidence(f"opportunity-{i:03d}") for i in range(factor)
         ]
         workloads.append(self._complete("evidence_lineage", factor, evidence_results))
+
         promotions = [
             self.adapter.promote(f"candidate-{i:03d}", f"canonical-{i:03d}")
             for i in range(factor)
         ]
         workloads.append(self._complete("canonical_promotion", factor, promotions))
+
         corrections = [
             self.adapter.correct(f"canonical-{i:03d}", f"revision-{i:03d}")
             for i in range(factor)
         ]
         workloads.append(self._complete("canonical_correction", factor, corrections))
+
         temporal_results = [
             self.adapter.get_state_as_of(
                 f"opportunity-{i:03d}", "2026-08-01T00:00:00Z"
@@ -199,6 +213,7 @@ class BenchmarkRunner:
             for i in range(factor)
         ]
         workloads.append(self._complete("historical_as_of_read", factor, temporal_results))
+
         workloads.extend(
             WorkloadResult(name, "pending", 0, 0, None, reason)
             for name, reason in sorted(PENDING_WORKLOADS.items())

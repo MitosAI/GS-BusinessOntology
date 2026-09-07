@@ -1,5 +1,3 @@
-import pytest
-
 from gensigma_benchmarks import BenchmarkRunner, ReferenceAdapter, build_fixture
 
 
@@ -14,10 +12,16 @@ def test_small_baseline_is_reproducible() -> None:
 
 def test_scale_cardinalities_are_deterministic() -> None:
     assert run("tiny")["cardinality"] == {
-        "identities": 3, "relationships": 2, "evidence": 2, "temporal_states": 2,
+        "identities": 3,
+        "relationships": 2,
+        "evidence": 2,
+        "temporal_states": 2,
     }
     assert run("medium")["cardinality"] == {
-        "identities": 75, "relationships": 50, "evidence": 50, "temporal_states": 50,
+        "identities": 75,
+        "relationships": 50,
+        "evidence": 50,
+        "temporal_states": 50,
     }
 
 
@@ -40,5 +44,9 @@ def test_reference_temporal_adapter_uses_half_open_intervals() -> None:
 
 
 def test_unknown_scale_fails_clearly() -> None:
-    with pytest.raises(ValueError, match="unknown scale"):
+    try:
         build_fixture("huge")
+    except ValueError as error:
+        assert "unknown scale" in str(error)
+    else:
+        raise AssertionError("expected ValueError")
