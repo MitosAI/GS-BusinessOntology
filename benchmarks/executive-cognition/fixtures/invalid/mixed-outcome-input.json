@@ -1,0 +1,18 @@
+{
+  "as_of": "2026-08-15T17:00:00Z",
+  "case_id": "invalid-mixed-outcome",
+  "case_version": "1.0.0",
+  "contract_version": "decision-case/0.1",
+  "decision_class": "bid_no_bid",
+  "decision_input": {
+    "context_version": "decision-context-projection/0.1",
+    "evidence_refs": [],
+    "context": {
+      "held_out_outcome": {"award_result": "win"}
+    },
+    "uncertainties": [],
+    "unknowns": []
+  },
+  "evidence": [],
+  "question": "Should the organization bid?"
+}
