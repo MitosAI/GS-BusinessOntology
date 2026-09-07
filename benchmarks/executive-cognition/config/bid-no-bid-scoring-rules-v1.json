@@ -1,0 +1,28 @@
+{
+  "case_id": "synthetic-bid-001",
+  "configuration_id": "synthetic-bid-001-scoring-rules",
+  "configuration_version": "1.0.0",
+  "hard_constraint_rules": [
+    {
+      "expected": ["bid"],
+      "operator": "not_in",
+      "output_field": "recommendation",
+      "rule_id": "registration-required-when-unsatisfied"
+    }
+  ],
+  "policy_authority_rules": [
+    {
+      "expected": ["approval_required"],
+      "operator": "in",
+      "output_field": "authority_status",
+      "rule_id": "executive-bid-approval"
+    }
+  ],
+  "required_output_fields": [
+    "recommendation",
+    "rationale",
+    "method_trace",
+    "evidence_refs",
+    "authority_status"
+  ]
+}
