@@ -66,3 +66,20 @@ provenance semantics.
 
 Temporal filtering, model execution, scoring logic, review randomization, and
 report rendering remain owned by those downstream issues.
+
+## Baseline Arms
+
+`EvaluationRunner` executes every `BenchmarkArm` against the same immutable
+`ArmInput`, validates the arm metadata, records an `EvaluationRun`, and seals the
+common `ArmOutput`. Repeated executions require distinct run identifiers and
+therefore produce distinct immutable result identities.
+
+`LLMOnlyBaseline` accepts a provider-neutral `ModelAdapter`. The exact model and
+prompt versions are benchmark configuration recorded in the run manifest; no
+provider is selected by the architecture. The model receives only the serialized
+outcome-free `ArmInput`.
+
+`StaticScorecardBaseline` reads the committed, versioned Bid/No-Bid criteria and
+weights. Its criteria, mappings, thresholds, contributions, and configuration
+digest remain inspectable rather than hidden in a prompt. Both baselines are
+comparators for M11, not production Decision Engine implementations.
