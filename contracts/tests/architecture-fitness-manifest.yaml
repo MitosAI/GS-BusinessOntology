@@ -33,6 +33,10 @@ fitness_functions:
     phase: contract_and_runtime
     fixtures: [commercial, delivery, compliance]
     contract_check: API exposes as_of and temporal mode without projecting later knowledge backward
+    reference_runtime_status: PASS
+    runtime_evidence:
+      - tests/test_temporal_reads.py
+      - tests/test_business_reality_benchmark.py
 
   - id: FF-006
     name: security_non_leakage

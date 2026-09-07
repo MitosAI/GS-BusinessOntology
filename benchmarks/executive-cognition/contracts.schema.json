@@ -1,0 +1,325 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gensigma.local/benchmarks/executive-cognition/contracts.schema.json",
+  "title": "GenSigma Executive Cognition Benchmark Contracts",
+  "description": "Benchmark-local evaluation artifacts. These definitions are not canonical ontology objects.",
+  "$defs": {
+    "nonEmptyString": {"type": "string", "minLength": 1},
+    "stringList": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/nonEmptyString"},
+      "uniqueItems": true
+    },
+    "versionedRef": {
+      "type": "object",
+      "required": ["id", "version"],
+      "properties": {
+        "id": {"$ref": "#/$defs/nonEmptyString"},
+        "version": {"$ref": "#/$defs/nonEmptyString"}
+      },
+      "additionalProperties": false
+    },
+    "digestedRef": {
+      "type": "object",
+      "required": ["id", "version", "digest"],
+      "properties": {
+        "id": {"$ref": "#/$defs/nonEmptyString"},
+        "version": {"$ref": "#/$defs/nonEmptyString"},
+        "digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      },
+      "additionalProperties": false
+    },
+    "componentVersion": {
+      "type": "object",
+      "required": ["id", "version"],
+      "properties": {
+        "id": {"$ref": "#/$defs/nonEmptyString"},
+        "version": {"$ref": "#/$defs/nonEmptyString"},
+        "configuration_digest": {
+          "type": ["string", "null"],
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "additionalProperties": false
+    },
+    "evidenceRef": {
+      "title": "Decision-time Evidence Reference",
+      "type": "object",
+      "required": [
+        "evidence_id", "evidence_version", "source_ref", "available_at",
+        "effective_at", "epistemic_status", "provenance_refs"
+      ],
+      "properties": {
+        "evidence_id": {"$ref": "#/$defs/nonEmptyString"},
+        "evidence_version": {"$ref": "#/$defs/nonEmptyString"},
+        "source_ref": {"$ref": "#/$defs/nonEmptyString"},
+        "available_at": {"type": "string", "format": "date-time"},
+        "effective_at": {"type": "string", "format": "date-time"},
+        "epistemic_status": {
+          "enum": [
+            "observed", "claimed", "inferred", "assumed", "assessed",
+            "predicted", "canonical", "unresolved"
+          ]
+        },
+        "provenance_refs": {"$ref": "#/$defs/stringList"},
+        "content_ref": {"type": ["string", "null"]},
+        "summary": {"type": ["string", "null"]}
+      },
+      "additionalProperties": false
+    },
+    "uncertainty": {
+      "type": "object",
+      "required": ["uncertainty_id", "type", "statement", "adequacy", "evidence_refs"],
+      "properties": {
+        "uncertainty_id": {"$ref": "#/$defs/nonEmptyString"},
+        "type": {
+          "enum": [
+            "fact", "identity_context", "model", "parameter_probability",
+            "forecast", "capability_execution", "strategic_response",
+            "preference_criterion", "causal"
+          ]
+        },
+        "statement": {"$ref": "#/$defs/nonEmptyString"},
+        "adequacy": {"enum": ["P0", "P1", "P2", "P3", "not_applicable"]},
+        "probability": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+        "evidence_refs": {"$ref": "#/$defs/stringList"},
+        "probability_basis_refs": {"$ref": "#/$defs/stringList"}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"adequacy": {"enum": ["P0", "P1", "not_applicable"]}}},
+          "then": {"properties": {"probability": {"type": "null"}}}
+        },
+        {
+          "if": {"required": ["probability"], "properties": {"probability": {"type": "number"}}},
+          "then": {
+            "required": ["probability_basis_refs"],
+            "properties": {
+              "adequacy": {"enum": ["P2", "P3"]},
+              "probability_basis_refs": {"minItems": 1}
+            }
+          }
+        }
+      ],
+      "additionalProperties": false
+    },
+    "decisionTimeInput": {
+      "title": "Decision-time Input",
+      "type": "object",
+      "required": ["context_version", "context", "evidence_refs", "uncertainties", "unknowns"],
+      "properties": {
+        "context_version": {"$ref": "#/$defs/nonEmptyString"},
+        "context": {
+          "type": "object",
+          "description": "Frozen benchmark projection; owning models retain semantic authority."
+        },
+        "evidence_refs": {"$ref": "#/$defs/stringList"},
+        "uncertainties": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/uncertainty"}
+        },
+        "unknowns": {"$ref": "#/$defs/stringList"},
+        "contradictions": {"type": "array", "items": {"type": "object"}}
+      },
+      "additionalProperties": false
+    },
+    "decisionCase": {
+      "title": "DecisionCase",
+      "type": "object",
+      "required": [
+        "contract_version", "case_id", "case_version", "decision_class",
+        "question", "as_of", "decision_input", "evidence"
+      ],
+      "properties": {
+        "contract_version": {"const": "decision-case/0.1"},
+        "case_id": {"$ref": "#/$defs/nonEmptyString"},
+        "case_version": {"$ref": "#/$defs/nonEmptyString"},
+        "decision_class": {"$ref": "#/$defs/nonEmptyString"},
+        "question": {"$ref": "#/$defs/nonEmptyString"},
+        "as_of": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Knowledge-availability cutoff for decision-time input."
+        },
+        "decision_input": {"$ref": "#/$defs/decisionTimeInput"},
+        "evidence": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/evidenceRef"}
+        },
+        "provenance_refs": {"$ref": "#/$defs/stringList"}
+      },
+      "additionalProperties": false
+    },
+    "heldOutOutcome": {
+      "title": "Held-out Outcome",
+      "type": "object",
+      "required": [
+        "contract_version", "outcome_id", "outcome_version", "case_id",
+        "case_version", "observed_at", "outcome", "evidence_refs"
+      ],
+      "properties": {
+        "contract_version": {"const": "held-out-outcome/0.1"},
+        "outcome_id": {"$ref": "#/$defs/nonEmptyString"},
+        "outcome_version": {"$ref": "#/$defs/nonEmptyString"},
+        "case_id": {"$ref": "#/$defs/nonEmptyString"},
+        "case_version": {"$ref": "#/$defs/nonEmptyString"},
+        "observed_at": {"type": "string", "format": "date-time"},
+        "outcome": {"type": "object"},
+        "evidence_refs": {"$ref": "#/$defs/stringList"},
+        "provenance_refs": {"$ref": "#/$defs/stringList"}
+      },
+      "additionalProperties": false
+    },
+    "evaluationArm": {
+      "title": "Evaluation-arm Identity",
+      "type": "object",
+      "required": [
+        "contract_version", "arm_id", "arm_version", "arm_type",
+        "configuration_versions", "model_versions", "prompt_versions", "tool_versions"
+      ],
+      "properties": {
+        "contract_version": {"const": "evaluation-arm/0.1"},
+        "arm_id": {"$ref": "#/$defs/nonEmptyString"},
+        "arm_version": {"$ref": "#/$defs/nonEmptyString"},
+        "arm_type": {
+          "enum": [
+            "historical_human", "llm_only", "scorecard", "modular_routed",
+            "specialist_quantitative"
+          ]
+        },
+        "configuration_versions": {"type": "array", "items": {"$ref": "#/$defs/componentVersion"}},
+        "model_versions": {"type": "array", "items": {"$ref": "#/$defs/componentVersion"}},
+        "prompt_versions": {"type": "array", "items": {"$ref": "#/$defs/componentVersion"}},
+        "tool_versions": {"type": "array", "items": {"$ref": "#/$defs/componentVersion"}}
+      },
+      "additionalProperties": false
+    },
+    "evaluationRun": {
+      "title": "Evaluation-run Manifest",
+      "type": "object",
+      "required": [
+        "contract_version", "run_id", "run_version", "run_attempt", "case_ref",
+        "arm_ref", "configuration_versions", "model_versions", "prompt_versions",
+        "tool_versions", "metric_versions", "started_at", "completed_at", "input_digest"
+      ],
+      "properties": {
+        "contract_version": {"const": "evaluation-run/0.1"},
+        "run_id": {"$ref": "#/$defs/nonEmptyString"},
+        "run_version": {"$ref": "#/$defs/nonEmptyString"},
+        "run_attempt": {"type": "integer", "minimum": 1},
+        "case_ref": {"$ref": "#/$defs/digestedRef"},
+        "arm_ref": {"$ref": "#/$defs/digestedRef"},
+        "configuration_versions": {"type": "array", "items": {"$ref": "#/$defs/componentVersion"}},
+        "model_versions": {"type": "array", "items": {"$ref": "#/$defs/componentVersion"}},
+        "prompt_versions": {"type": "array", "items": {"$ref": "#/$defs/componentVersion"}},
+        "tool_versions": {"type": "array", "items": {"$ref": "#/$defs/componentVersion"}},
+        "metric_versions": {"type": "array", "items": {"$ref": "#/$defs/componentVersion"}},
+        "random_seed": {"type": ["integer", "null"]},
+        "started_at": {"type": "string", "format": "date-time"},
+        "completed_at": {"type": "string", "format": "date-time"},
+        "input_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      },
+      "additionalProperties": false
+    },
+    "methodTrace": {
+      "type": "object",
+      "required": ["method_id", "method_version", "role", "material_contribution"],
+      "properties": {
+        "method_id": {"$ref": "#/$defs/nonEmptyString"},
+        "method_version": {"$ref": "#/$defs/nonEmptyString"},
+        "role": {"enum": ["gate", "router", "analysis", "challenge", "synthesis", "human_judgment"]},
+        "material_contribution": {"$ref": "#/$defs/nonEmptyString"}
+      },
+      "additionalProperties": false
+    },
+    "armOutput": {
+      "title": "Arm Output",
+      "type": "object",
+      "required": [
+        "contract_version", "result_id", "result_version", "run_id", "created_at",
+        "recommendation", "rationale", "assumptions", "uncertainties",
+        "reversal_conditions", "method_trace", "evidence_refs", "authority_status",
+        "result_digest"
+      ],
+      "properties": {
+        "contract_version": {"const": "arm-output/0.1"},
+        "result_id": {"$ref": "#/$defs/nonEmptyString"},
+        "result_version": {"$ref": "#/$defs/nonEmptyString"},
+        "run_id": {"$ref": "#/$defs/nonEmptyString"},
+        "created_at": {"type": "string", "format": "date-time"},
+        "recommendation": {"$ref": "#/$defs/nonEmptyString"},
+        "rationale": {"$ref": "#/$defs/nonEmptyString"},
+        "alternatives_considered": {"$ref": "#/$defs/stringList"},
+        "assumptions": {"$ref": "#/$defs/stringList"},
+        "uncertainties": {"type": "array", "items": {"$ref": "#/$defs/uncertainty"}},
+        "reversal_conditions": {"$ref": "#/$defs/stringList"},
+        "method_trace": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/methodTrace"}},
+        "evidence_refs": {"$ref": "#/$defs/stringList"},
+        "authority_status": {"enum": ["executable", "approval_required", "prohibited", "authority_unknown"]},
+        "result_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      },
+      "additionalProperties": false
+    },
+    "metricResult": {
+      "title": "Metric Result",
+      "type": "object",
+      "required": [
+        "contract_version", "metric_result_id", "metric_id", "metric_version",
+        "run_id", "metric_kind", "value", "computed_at", "result_digest"
+      ],
+      "properties": {
+        "contract_version": {"const": "metric-result/0.1"},
+        "metric_result_id": {"$ref": "#/$defs/nonEmptyString"},
+        "metric_id": {"$ref": "#/$defs/nonEmptyString"},
+        "metric_version": {"$ref": "#/$defs/nonEmptyString"},
+        "run_id": {"$ref": "#/$defs/nonEmptyString"},
+        "metric_kind": {"enum": ["deterministic", "probabilistic", "human_rubric", "operational"]},
+        "value": {"type": ["number", "integer", "boolean", "string", "null"]},
+        "details": {"type": "object"},
+        "computed_at": {"type": "string", "format": "date-time"},
+        "result_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      },
+      "additionalProperties": false
+    },
+    "humanReviewPacket": {
+      "title": "Human-review Packet Metadata",
+      "type": "object",
+      "required": [
+        "contract_version", "packet_id", "packet_version", "case_ref",
+        "rubric_version", "blind_result_refs", "randomization_seed_digest", "generated_at"
+      ],
+      "properties": {
+        "contract_version": {"const": "human-review-packet/0.1"},
+        "packet_id": {"$ref": "#/$defs/nonEmptyString"},
+        "packet_version": {"$ref": "#/$defs/nonEmptyString"},
+        "case_ref": {"$ref": "#/$defs/digestedRef"},
+        "rubric_version": {"$ref": "#/$defs/nonEmptyString"},
+        "blind_result_refs": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/digestedRef"}},
+        "randomization_seed_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "generated_at": {"type": "string", "format": "date-time"}
+      },
+      "additionalProperties": false
+    },
+    "benchmarkReport": {
+      "title": "Benchmark-report Metadata",
+      "type": "object",
+      "required": [
+        "contract_version", "report_id", "report_version", "case_refs", "run_refs",
+        "metric_versions", "artifact_refs", "generated_at", "result_digest"
+      ],
+      "properties": {
+        "contract_version": {"const": "benchmark-report/0.1"},
+        "report_id": {"$ref": "#/$defs/nonEmptyString"},
+        "report_version": {"$ref": "#/$defs/nonEmptyString"},
+        "case_refs": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/digestedRef"}},
+        "run_refs": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/digestedRef"}},
+        "metric_versions": {"type": "array", "items": {"$ref": "#/$defs/componentVersion"}},
+        "review_packet_refs": {"type": "array", "items": {"$ref": "#/$defs/digestedRef"}},
+        "artifact_refs": {"$ref": "#/$defs/stringList"},
+        "generated_at": {"type": "string", "format": "date-time"},
+        "result_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      },
+      "additionalProperties": false
+    }
+  }
+}
