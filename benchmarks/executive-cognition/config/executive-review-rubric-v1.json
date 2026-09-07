@@ -1,0 +1,29 @@
+{
+  "dimensions": [
+    "decision_framing",
+    "assumption_quality",
+    "uncertainty_treatment",
+    "reversal_condition_quality"
+  ],
+  "guidance": {
+    "assumption_quality": "Rate whether material assumptions are explicit, decision-relevant, and appropriately bounded.",
+    "decision_framing": "Rate whether the decision, stakes, objectives, and meaningful alternatives are framed correctly.",
+    "reversal_condition_quality": "Rate whether the output states observable conditions that should trigger reconsideration.",
+    "uncertainty_treatment": "Rate whether important unknowns are surfaced without unsupported precision or false certainty."
+  },
+  "linked_metric": {
+    "id": "executive-quality-rubric",
+    "version": "1.0.0"
+  },
+  "rubric_id": "executive-cognition-review",
+  "rubric_version": "1.0.0",
+  "scale": {
+    "anchors": {
+      "1": "Materially deficient or misleading",
+      "3": "Adequate with consequential omissions",
+      "5": "Strong, explicit, and decision-useful"
+    },
+    "maximum": 5,
+    "minimum": 1
+  }
+}
