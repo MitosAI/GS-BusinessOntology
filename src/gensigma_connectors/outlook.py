@@ -70,6 +70,11 @@ class OutlookDeltaSensor:
     ) -> OutlookSyncResult:
         if not ingestion_run_id:
             raise ValueError("ingestion_run_id is required")
+        if emit is None:
+            raise ValueError(
+                "emit is required when syncing multiple folders so completed "
+                "folder checkpoints cannot outlive undelivered envelopes"
+            )
         all_envelopes: list[Mapping[str, Any]] = []
         emitted = duplicates = tombstones = 0
         keys: list[str] = []
@@ -95,6 +100,8 @@ class OutlookDeltaSensor:
         emit: Callable[[Mapping[str, Any]], bool] | None = None,
         received_after: datetime | None = None,
     ) -> OutlookSyncResult:
+        if not ingestion_run_id:
+            raise ValueError("ingestion_run_id is required")
         if folder not in FOLDERS:
             raise ValueError(f"folder must be one of {FOLDERS}")
         checkpoint_key = f"outlook:{self._config.tenant_id}:{self._config.mailbox_id}:folder:{folder}"
