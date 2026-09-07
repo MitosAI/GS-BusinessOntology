@@ -9,6 +9,7 @@ from gensigma_br import (
     CandidateSemanticTypeMismatch,
     ContractViolation,
     EvidenceConflict,
+    PermissiveTestPolicyDecisionPoint,
     UnknownEvidence,
     UnknownSemanticType,
 )
@@ -26,6 +27,17 @@ def security() -> dict:
         "denied_principals_or_scopes": [],
         "property_restrictions": [],
         "evidence_restrictions": [],
+    }
+
+
+def security_context() -> dict:
+    return {
+        "actor_id": "test:actor",
+        "actor_type": "human",
+        "principal_refs": [],
+        "role_refs": [],
+        "delegation_refs": [],
+        "requested_at": NOW,
     }
 
 
@@ -127,7 +139,9 @@ def test_candidate_must_reference_existing_evidence() -> None:
 
 
 def test_canonical_promotion_preserves_evidence_lineage() -> None:
-    kernel = BusinessRealityKernel()
+    kernel = BusinessRealityKernel(
+        policy_decision_point=PermissiveTestPolicyDecisionPoint()
+    )
     kernel.append_raw_evidence(raw_evidence())
     kernel.propose_candidate(candidate())
 
@@ -141,7 +155,9 @@ def test_canonical_promotion_preserves_evidence_lineage() -> None:
     assert record.resource_id == "org-sfo"
     assert record.candidate_id == "cand-org-001"
     assert record.evidence_ids == ("ev-001",)
-    assert kernel.get_object("org-sfo")["canonical_name"] == "San Francisco International Airport"
+    assert kernel.get_object(
+        "org-sfo", security_context=security_context()
+    )["canonical_name"] == "San Francisco International Airport"
 
 
 def test_candidate_semantic_type_mismatch_is_rejected_before_promotion() -> None:
@@ -200,7 +216,9 @@ def test_wrong_business_shape_is_rejected_by_contract() -> None:
 
 
 def test_correction_preserves_prior_interpretation() -> None:
-    kernel = BusinessRealityKernel()
+    kernel = BusinessRealityKernel(
+        policy_decision_point=PermissiveTestPolicyDecisionPoint()
+    )
     kernel.append_raw_evidence(raw_evidence())
     kernel.propose_candidate(candidate())
     kernel.promote_candidate(
@@ -225,7 +243,9 @@ def test_correction_preserves_prior_interpretation() -> None:
         reason="Correct canonical display name",
     )
 
-    history = kernel.get_history("org-sfo")
+    history = kernel.get_history(
+        "org-sfo", security_context=security_context()
+    )
     assert len(history) == 2
     assert history[0]["canonical_name"] == "SF Airport"
     assert history[1]["canonical_name"] == "San Francisco International Airport"
