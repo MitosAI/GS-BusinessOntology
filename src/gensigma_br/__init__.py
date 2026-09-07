@@ -4,7 +4,9 @@ from .contracts import ContractRegistry, ContractViolation, UnknownSemanticType
 from .kernel import (
     BusinessRealityKernel,
     CandidateSemanticTypeMismatch,
+    CanonicalResourceConflict,
     EvidenceConflict,
+    RelationshipInvariantViolation,
     UnknownCandidate,
     UnknownEvidence,
 )
@@ -12,9 +14,11 @@ from .kernel import (
 __all__ = [
     "BusinessRealityKernel",
     "CandidateSemanticTypeMismatch",
+    "CanonicalResourceConflict",
     "ContractRegistry",
     "ContractViolation",
     "EvidenceConflict",
+    "RelationshipInvariantViolation",
     "UnknownCandidate",
     "UnknownEvidence",
     "UnknownSemanticType",
