@@ -31,6 +31,16 @@ from .cognition_scoring import (
     HumanRubricHook,
     MetricCatalog,
 )
+from .cognition_review import (
+    BenchmarkReportBundle,
+    BenchmarkReporter,
+    ReviewConfigurationError,
+    ReviewPacketBuilder,
+    ReviewPacketBundle,
+    ReviewResponse,
+    reconcile_reviews,
+    reviewer_disagreement,
+)
 
 __all__ = [
     "ArmInput",
@@ -38,6 +48,8 @@ __all__ = [
     "ArmExecution",
     "BenchmarkArm",
     "BenchmarkContractViolation",
+    "BenchmarkReportBundle",
+    "BenchmarkReporter",
     "BenchmarkRunner",
     "CognitionContractRegistry",
     "CognitionScorer",
@@ -52,12 +64,18 @@ __all__ = [
     "ModelAdapter",
     "MetricCatalog",
     "ReferenceAdapter",
+    "ReviewConfigurationError",
+    "ReviewPacketBuilder",
+    "ReviewPacketBundle",
+    "ReviewResponse",
     "StaticScorecardBaseline",
     "ValidationAuditEntry",
     "arm_input_document",
     "build_fixture",
     "canonical_json",
     "immutable_result_identity",
+    "reconcile_reviews",
+    "reviewer_disagreement",
     "seal_result",
     "stable_digest",
 ]
