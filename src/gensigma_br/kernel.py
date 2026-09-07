@@ -36,6 +36,22 @@ class RelationshipInvariantViolation(ValueError):
     pass
 
 
+class TemporalQueryError(ValueError):
+    pass
+
+
+class UnsupportedTemporalPrecision(TemporalQueryError):
+    pass
+
+
+class TemporalStateNotFound(TemporalQueryError):
+    pass
+
+
+class AmbiguousTemporalState(TemporalQueryError):
+    pass
+
+
 @dataclass(frozen=True)
 class PromotionRecord:
     resource_id: str
@@ -58,8 +74,50 @@ def _utc_now() -> str:
     return datetime.now(UTC).isoformat().replace("+00:00", "Z")
 
 
+_TEMPORAL_MODES = frozenset(
+    {"effective_using_current_knowledge", "accepted_as_recorded_at_time"}
+)
+
+
+def _parse_temporal_timestamp(value: str, *, field: str) -> datetime:
+    if not isinstance(value, str):
+        raise TemporalQueryError(f"{field} must be a timezone-aware RFC 3339 string")
+    normalized = value[:-1] + "+00:00" if value.endswith("Z") else value
+    try:
+        parsed = datetime.fromisoformat(normalized)
+    except ValueError as exc:
+        raise TemporalQueryError(
+            f"{field} must be a timezone-aware RFC 3339 string"
+        ) from exc
+    if parsed.tzinfo is None or parsed.utcoffset() is None:
+        raise TemporalQueryError(f"{field} must include a UTC offset")
+    return parsed.astimezone(UTC)
+
+
+def _is_effective_at(resource: dict[str, Any], as_of: datetime) -> bool:
+    effective_time = resource.get("effective_time", {})
+    precision = effective_time.get("precision")
+    if precision != "exact":
+        raise UnsupportedTemporalPrecision(
+            f"Temporal reads require exact precision; got {precision!r}"
+        )
+    valid_from_raw = effective_time.get("valid_from")
+    valid_to_raw = effective_time.get("valid_to")
+    valid_from = None if valid_from_raw is None else _parse_temporal_timestamp(
+        valid_from_raw, field="valid_from"
+    )
+    valid_to = None if valid_to_raw is None else _parse_temporal_timestamp(
+        valid_to_raw, field="valid_to"
+    )
+    if valid_from is not None and valid_to is not None and valid_from >= valid_to:
+        raise TemporalQueryError("effective_time requires valid_from < valid_to")
+    return (valid_from is None or valid_from <= as_of) and (
+        valid_to is None or as_of < valid_to
+    )
+
+
 class BusinessRealityKernel:
-    """Executable reference kernel for governed Business Reality semantics.
+    """Executable reference kernel for evidence -> candidate -> canonical promotion.
 
     This implementation is deliberately in-memory. It proves semantic and behavioral
     invariants before the program selects production persistence technology.
@@ -135,7 +193,11 @@ class BusinessRealityKernel:
         actor: str,
         reason: str,
     ) -> PromotionRecord:
-        """Promote a governed candidate into canonical Business Reality."""
+        """Promote a governed candidate into canonical Business Reality.
+
+        There is intentionally no public direct `put_canonical` method. Canonical state
+        can enter through a promotion path so evidence and decision lineage are retained.
+        """
         candidate = self.get_candidate(candidate_id)
         if candidate.get("resolution_status") in {"rejected", "superseded"}:
             raise ValueError(f"Candidate {candidate_id} cannot be promoted from its current state")
@@ -152,12 +214,12 @@ class BusinessRealityKernel:
             )
 
         self.contracts.validate_semantic_resource(semantic_type, resource)
+
         resource_id = resource["id"]
         if resource_id in self._canonical_history:
             raise CanonicalResourceConflict(
                 f"Canonical resource {resource_id} already exists; use the correction path"
             )
-
         if semantic_type == "BusinessRelationship":
             self._validate_business_relationship(resource, candidate=candidate)
 
@@ -208,17 +270,50 @@ class BusinessRealityKernel:
         self._corrections.append(record)
         return record
 
-    def get_object(self, resource_id: str) -> dict[str, Any]:
+    def get_state(
+        self,
+        resource_id: str,
+        *,
+        as_of: str,
+        temporal_mode: str = "effective_using_current_knowledge",
+    ) -> dict[str, Any]:
+        """Return exact point-in-time state under the contracted temporal mode."""
+        if temporal_mode not in _TEMPORAL_MODES:
+            raise TemporalQueryError(
+                f"Unknown temporal mode {temporal_mode!r}; "
+                f"choose one of {sorted(_TEMPORAL_MODES)}"
+            )
+        query_time = _parse_temporal_timestamp(as_of, field="as_of")
         try:
-            return copy.deepcopy(self._canonical_history[resource_id][-1])
+            history = self._canonical_history[resource_id]
         except KeyError as exc:
             raise KeyError(f"Unknown canonical resource: {resource_id}") from exc
-
-    def get_history(self, resource_id: str) -> list[dict[str, Any]]:
-        try:
-            return copy.deepcopy(self._canonical_history[resource_id])
-        except KeyError as exc:
-            raise KeyError(f"Unknown canonical resource: {resource_id}") from exc
+        applicable: list[tuple[datetime, dict[str, Any]]] = []
+        for resource in history:
+            if not _is_effective_at(resource, query_time):
+                continue
+            recorded_at = _parse_temporal_timestamp(
+                resource["recorded_at"], field="recorded_at"
+            )
+            if temporal_mode == "accepted_as_recorded_at_time" and recorded_at > query_time:
+                continue
+            applicable.append((recorded_at, resource))
+        if not applicable:
+            raise TemporalStateNotFound(
+                f"No state for {resource_id!r} applies at {as_of!r} "
+                f"under mode {temporal_mode!r}"
+            )
+        latest_recorded_at = max(recorded_at for recorded_at, _ in applicable)
+        winners = [
+            resource
+            for recorded_at, resource in applicable
+            if recorded_at == latest_recorded_at
+        ]
+        if len(winners) > 1 and any(resource != winners[0] for resource in winners[1:]):
+            raise AmbiguousTemporalState(
+                f"Multiple states for {resource_id!r} are equally current at {as_of!r}"
+            )
+        return copy.deepcopy(winners[0])
 
     def get_relationships(
         self,
@@ -227,10 +322,10 @@ class BusinessRealityKernel:
         relationship_type: str | None = None,
         scope_id: str | None = None,
     ) -> list[dict[str, Any]]:
-        """Return current relationships for a participant, traversable from either side.
+        """Return current relationships for a participant from either side.
 
-        Effective-time and security filtering are intentionally deferred to the next
-        bounded runtime increments. Callers cannot infer those guarantees from this API.
+        Effective-time and security filtering are separate bounded increments. Callers
+        cannot infer those guarantees from this current-state reference method.
         """
         self.get_object(resource_id)
         matches: list[dict[str, Any]] = []
@@ -256,6 +351,18 @@ class BusinessRealityKernel:
             matches.append(copy.deepcopy(relationship))
         return sorted(matches, key=lambda item: item["id"])
 
+    def get_object(self, resource_id: str) -> dict[str, Any]:
+        try:
+            return copy.deepcopy(self._canonical_history[resource_id][-1])
+        except KeyError as exc:
+            raise KeyError(f"Unknown canonical resource: {resource_id}") from exc
+
+    def get_history(self, resource_id: str) -> list[dict[str, Any]]:
+        try:
+            return copy.deepcopy(self._canonical_history[resource_id])
+        except KeyError as exc:
+            raise KeyError(f"Unknown canonical resource: {resource_id}") from exc
+
     def get_promotion_records(self, resource_id: str | None = None) -> list[PromotionRecord]:
         if resource_id is None:
             return list(self._promotions)
@@ -265,6 +372,7 @@ class BusinessRealityKernel:
         if resource_id is None:
             return list(self._corrections)
         return [record for record in self._corrections if record.resource_id == resource_id]
+
 
     def _validate_business_relationship(
         self,
