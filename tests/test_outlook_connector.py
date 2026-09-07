@@ -105,7 +105,7 @@ def test_syncs_inbox_and_sent_with_opaque_paging_attachments_and_separate_checkp
     ])
     outlook, store = sensor(transport)
 
-    result = outlook.sync(ingestion_run_id="run-1")
+    result = outlook.sync(ingestion_run_id="run-1", emit=lambda _: True)
 
     assert transport.requests[1][1] == next_link
     assert transport.requests[3][1] == attachment_next
@@ -118,6 +118,29 @@ def test_syncs_inbox_and_sent_with_opaque_paging_attachments_and_separate_checkp
     assert result.envelopes[1]["metadata"]["content_type"] == "application/pdf"
     assert "body" not in result.envelopes[0]["metadata"]
     assert "contentBytes" not in result.envelopes[1]["metadata"]
+
+
+def test_multi_folder_sync_requires_sink_before_any_checkpoint_can_advance() -> None:
+    transport = FakeTransport([])
+    outlook, store = sensor(transport)
+
+    with pytest.raises(ValueError, match="emit is required"):
+        outlook.sync(ingestion_run_id="run-no-sink")
+
+    assert transport.requests == []
+    assert store.get(
+        "outlook:tenant-1:evidence@example.com:folder:inbox"
+    ) is None
+    assert store.get(
+        "outlook:tenant-1:evidence@example.com:folder:sentitems"
+    ) is None
+
+
+def test_sync_folder_rejects_empty_ingestion_run_id() -> None:
+    outlook, _ = sensor(FakeTransport([]))
+
+    with pytest.raises(ValueError, match="ingestion_run_id"):
+        outlook.sync_folder("inbox", ingestion_run_id="")
 
 
 def test_resume_uses_saved_opaque_link_and_commits_only_completed_delta_link() -> None:
