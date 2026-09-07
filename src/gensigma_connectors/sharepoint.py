@@ -79,6 +79,11 @@ class SharePointDeltaSensor:
     def sync(self, *, ingestion_run_id: str, emit: Callable[[Mapping[str, Any]], bool] | None = None) -> SharePointSyncResult:
         if not ingestion_run_id:
             raise ValueError("ingestion_run_id is required")
+        if len(self._config.allowed_scopes) > 1 and emit is None:
+            raise ValueError(
+                "emit is required when syncing multiple scopes so completed "
+                "scope checkpoints cannot outlive undelivered envelopes"
+            )
         envelopes: list[Mapping[str, Any]] = []
         emitted = duplicates = tombstones = 0
         keys: list[str] = []
@@ -92,6 +97,8 @@ class SharePointDeltaSensor:
         return SharePointSyncResult(tuple(envelopes), emitted, duplicates, tombstones, tuple(keys))
 
     def sync_scope(self, scope: SharePointScope, *, ingestion_run_id: str, emit: Callable[[Mapping[str, Any]], bool] | None = None) -> SharePointSyncResult:
+        if not ingestion_run_id:
+            raise ValueError("ingestion_run_id is required")
         if scope not in self._config.allowed_scopes:
             raise ValueError("scope is not present in the configured allowlist")
         checkpoint_key = f"sharepoint:{self._config.tenant_id}:{scope.site_id}:drive:{scope.drive_id}"

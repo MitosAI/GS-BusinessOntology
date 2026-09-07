@@ -125,11 +125,43 @@ def test_each_allowlisted_drive_has_its_own_checkpoint() -> None:
     ])
     sharepoint, store = sensor(transport, scopes=scopes)
 
-    result = sharepoint.sync(ingestion_run_id="run-3")
+    result = sharepoint.sync(ingestion_run_id="run-3", emit=lambda _: True)
 
     assert len(result.checkpoint_keys) == 2
     assert store.get("sharepoint:tenant-1:site-1:drive:drive-1") == FINAL
     assert store.get("sharepoint:tenant-1:site-2:drive:drive-2") == final_two
+
+
+def test_multi_scope_sync_requires_sink_before_any_checkpoint_can_advance() -> None:
+    scopes = (
+        scope("drive-1"),
+        SharePointScope(
+            "site-2",
+            "drive-2",
+            "library-2",
+            ("m365-acl:library-2",),
+        ),
+    )
+    transport = FakeTransport([])
+    sharepoint, store = sensor(transport, scopes=scopes)
+
+    with pytest.raises(ValueError, match="emit is required"):
+        sharepoint.sync(ingestion_run_id="run-no-sink")
+
+    assert transport.requests == []
+    assert store.get(
+        "sharepoint:tenant-1:site-1:drive:drive-1"
+    ) is None
+    assert store.get(
+        "sharepoint:tenant-1:site-2:drive:drive-2"
+    ) is None
+
+
+def test_sync_scope_rejects_empty_ingestion_run_id() -> None:
+    sharepoint, _ = sensor(FakeTransport([]))
+
+    with pytest.raises(ValueError, match="ingestion_run_id"):
+        sharepoint.sync_scope(scope(), ingestion_run_id="")
 
 
 def test_resume_uses_saved_opaque_delta_link() -> None:
