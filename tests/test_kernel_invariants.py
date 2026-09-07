@@ -11,6 +11,7 @@ from gensigma_br import (
     ContractViolation,
     EvidenceConflict,
     PermissiveTestPolicyDecisionPoint,
+    ReferencePolicyDecisionPoint,
     RelationshipInvariantViolation,
     UnknownEvidence,
     UnknownSemanticType,
@@ -421,6 +422,26 @@ def test_relationship_query_filters_type_and_scope_without_inferring_other_scope
     assert relationships(kernel, 
         left["id"], scope_id=unrelated["id"]
     ) == []
+
+
+
+def test_hidden_relationship_is_omitted_without_leaking_its_existence() -> None:
+    kernel, left, _, _, relationship = setup_relationship_kernel()
+    for history in kernel._canonical_history.values():
+        history[-1]["security"]["policy_refs"] = ["policy:visible"]
+    relationship["security"]["policy_refs"] = ["policy:hidden"]
+    kernel._policy_decision_point = ReferencePolicyDecisionPoint(
+        policy_decisions={"policy:visible": True, "policy:hidden": False}
+    )
+    kernel.promote_candidate(
+        "cand-rel-001",
+        relationship,
+        actor="relationship-reviewer",
+        reason="Promote relationship hidden from the query subject",
+    )
+
+    assert relationships(kernel, left["id"]) == []
+
 
 
 def test_relationship_rejects_unknown_or_incompatible_canonical_references() -> None:
