@@ -228,7 +228,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '../schemas/kernel/typed-relationship.schema.json'
+              $ref: '../schemas/business/business-relationship.schema.json'
       responses:
         '200':
           description: Relationship proposal outcome
@@ -459,7 +459,7 @@ components:
             data:
               type: array
               items:
-                $ref: '../schemas/kernel/typed-relationship.schema.json'
+                $ref: '../schemas/business/business-relationship.schema.json'
           required: [data]
 
     ProvenanceListResponse:
