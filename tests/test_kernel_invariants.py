@@ -417,7 +417,7 @@ def test_relationship_rejects_unknown_or_incompatible_canonical_references() -> 
 
 def test_relationship_rejects_duplicate_participant_role_tuple() -> None:
     kernel, left, right, _, relationship = setup_relationship_kernel()
-    relationship["participants"][1] = copy.deepcopy(relationship["participants"][0])
+    relationship["participants"].append(copy.deepcopy(relationship["participants"][0]))
 
     with pytest.raises(RelationshipInvariantViolation, match="cannot repeat"):
         kernel.promote_candidate(
