@@ -67,21 +67,21 @@ Record PASS / GAP / DEFERRED findings.
 
 Bounded runtime work to close semantic gaps discovered in W3 without adding new architecture.
 
-### W5 — Typed relationship increment — VERIFIED
+### W5 — Typed relationship increment — IN REVIEW
 
 Implement the existing typed-relationship contract with scope, participant roles, effective time, provenance, security metadata, and correction history.
 
 Governing runtime contract: `docs/workstreams/koe/28-TYPED-RELATIONSHIP-RUNTIME-CONTRACT-v0.1.md`.
 
-The increment unifies the formerly divergent BusinessRelationship and TypedRelationship shapes, validates canonical participant/scope references, preserves governed promotion/correction, and supports deterministic bidirectional participant traversal. ADR-004 resolves canonical identity. The runtime suite passes 121 tests and CodeQL passes; KOE semantic review confirms endpoint, scope, evidence, correction, and traversal invariants.
+The increment unifies the formerly divergent BusinessRelationship and TypedRelationship shapes, validates canonical participant/scope references, preserves governed promotion/correction, and supports deterministic bidirectional participant traversal. ADR-004 resolves canonical identity. PR #37 integrates temporal selection and fail-closed authorization into that traversal.
 
-### W6 — Temporal/as-of increment — VERIFIED BASELINE
+### W6 — Temporal/as-of increment — VERIFIED BASELINE / RELATIONSHIP IN REVIEW
 
-Current and historical reads implement effective-time versus accepted-as-recorded temporal modes in PR #36. Relationship-specific temporal traversal follows after W5 integration.
+PR #36 implements current and historical reads under effective-time versus accepted-as-recorded temporal modes. PR #37 applies the same modes and half-open effective intervals to relationship traversal.
 
-### W7 — Security-context increment
+### W7 — Security-context increment — VERIFIED BASELINE / RELATIONSHIP IN REVIEW
 
-Implement explicit actor/security context and non-leakage behavior for reads/traversals/evidence access.
+ADR-005 and PR #45 implement the injected fail-closed authorization boundary. PR #37 routes relationship traversal through the same security context, projection, and non-disclosure enforcement.
 
 ### W8 — Query-contract increment
 
@@ -136,8 +136,8 @@ PR #7 verification additionally requires:
 
 ## Risks / unknowns
 
-- W5 intentionally preserves but does not enforce security policy; W7 must close non-leakage before relationship traversal is exposed beyond the reference kernel;
-- W5 returns current relationship interpretations only; W6 owns effective-time and accepted-as-recorded temporal modes;
+- current KOE PR #3 still contains stale `BUILD SPEC 001` naming in several artifact filenames/text;
+- reference kernel PR #7 is stacked on KOE PR #3 and must be retargeted/rebased after PR #3 is reconciled;
 - runtime performance/scale targets remain open pending Platform measurement;
 - production persistence/search/cloud topology remain intentionally undecided.
 

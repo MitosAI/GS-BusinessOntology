@@ -25,6 +25,12 @@ from .executive_cognition import (
     seal_result,
     stable_digest,
 )
+from .cognition_scoring import (
+    CognitionScorer,
+    ForecastObservation,
+    HumanRubricHook,
+    MetricCatalog,
+)
 
 __all__ = [
     "ArmInput",
@@ -34,13 +40,17 @@ __all__ = [
     "BenchmarkContractViolation",
     "BenchmarkRunner",
     "CognitionContractRegistry",
+    "CognitionScorer",
+    "ForecastObservation",
     "FrozenCaseLoad",
     "FrozenCaseLoadError",
     "FrozenCaseLoader",
     "HindsightLeakageViolation",
+    "HumanRubricHook",
     "EvaluationRunner",
     "LLMOnlyBaseline",
     "ModelAdapter",
+    "MetricCatalog",
     "ReferenceAdapter",
     "StaticScorecardBaseline",
     "ValidationAuditEntry",

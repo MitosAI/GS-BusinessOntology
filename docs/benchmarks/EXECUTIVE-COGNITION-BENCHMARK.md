@@ -83,3 +83,26 @@ outcome-free `ArmInput`.
 weights. Its criteria, mappings, thresholds, contributions, and configuration
 digest remain inspectable rather than hidden in a prompt. Both baselines are
 comparators for M11, not production Decision Engine implementations.
+
+## Scoring
+
+`MetricCatalog` supplies explicit metric identities and versions to both the
+evaluation-run manifest and sealed `MetricResult` records. `CognitionScorer`
+implements only machine-verifiable checks: explicitly configured constraint and
+authority rules, required-field completeness, resolvable evidence references,
+run latency/cost ingestion, and the binary Brier proper scoring rule. It does not
+parse free-form rationale into purported facts or combine dimensions into an
+intelligence score.
+
+Binary forecast results retain each raw `forecast_id`, probability, outcome, and
+squared error. Calibration summaries require at least 30 observations and still
+leave bin construction to an explicit later reporting step; below that threshold
+they return `insufficient_sample` with no bins. Human executive-quality dimensions
+are exposed as versioned `HumanRubricHook` metadata with `automated: false`, for
+Issue #15 review packets rather than deterministic scoring.
+
+Run the focused scoring tests with:
+
+```bash
+pytest -q tests/test_cognition_scoring.py
+```

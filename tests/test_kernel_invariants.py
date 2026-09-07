@@ -10,6 +10,7 @@ from gensigma_br import (
     CanonicalResourceConflict,
     ContractViolation,
     EvidenceConflict,
+    PermissiveTestPolicyDecisionPoint,
     RelationshipInvariantViolation,
     UnknownEvidence,
     UnknownSemanticType,
@@ -28,6 +29,17 @@ def security() -> dict:
         "denied_principals_or_scopes": [],
         "property_restrictions": [],
         "evidence_restrictions": [],
+    }
+
+
+def security_context() -> dict:
+    return {
+        "actor_id": "test:actor",
+        "actor_type": "human",
+        "principal_refs": [],
+        "role_refs": [],
+        "delegation_refs": [],
+        "requested_at": NOW,
     }
 
 
@@ -129,7 +141,9 @@ def test_candidate_must_reference_existing_evidence() -> None:
 
 
 def test_canonical_promotion_preserves_evidence_lineage() -> None:
-    kernel = BusinessRealityKernel()
+    kernel = BusinessRealityKernel(
+        policy_decision_point=PermissiveTestPolicyDecisionPoint()
+    )
     kernel.append_raw_evidence(raw_evidence())
     kernel.propose_candidate(candidate())
 
@@ -143,7 +157,9 @@ def test_canonical_promotion_preserves_evidence_lineage() -> None:
     assert record.resource_id == "org-sfo"
     assert record.candidate_id == "cand-org-001"
     assert record.evidence_ids == ("ev-001",)
-    assert kernel.get_object("org-sfo")["canonical_name"] == "San Francisco International Airport"
+    assert kernel.get_object(
+        "org-sfo", security_context=security_context()
+    )["canonical_name"] == "San Francisco International Airport"
 
 
 def test_candidate_semantic_type_mismatch_is_rejected_before_promotion() -> None:
@@ -202,7 +218,9 @@ def test_wrong_business_shape_is_rejected_by_contract() -> None:
 
 
 def test_correction_preserves_prior_interpretation() -> None:
-    kernel = BusinessRealityKernel()
+    kernel = BusinessRealityKernel(
+        policy_decision_point=PermissiveTestPolicyDecisionPoint()
+    )
     kernel.append_raw_evidence(raw_evidence())
     kernel.propose_candidate(candidate())
     kernel.promote_candidate(
@@ -227,7 +245,9 @@ def test_correction_preserves_prior_interpretation() -> None:
         reason="Correct canonical display name",
     )
 
-    history = kernel.get_history("org-sfo")
+    history = kernel.get_history(
+        "org-sfo", security_context=security_context()
+    )
     assert len(history) == 2
     assert history[0]["canonical_name"] == "SF Airport"
     assert history[1]["canonical_name"] == "San Francisco International Airport"
@@ -346,10 +366,20 @@ def business_relationship(
     }
 
 
+def relationships(
+    kernel: BusinessRealityKernel, resource_id: str, **kwargs: object
+) -> list[dict]:
+    return relationships(kernel, 
+        resource_id, security_context=security_context(), **kwargs
+    )
+
+
 def setup_relationship_kernel() -> tuple[
     BusinessRealityKernel, dict, dict, dict, dict
 ]:
-    kernel = BusinessRealityKernel()
+    kernel = BusinessRealityKernel(
+        policy_decision_point=PermissiveTestPolicyDecisionPoint()
+    )
     left = add_organization(kernel, "org-partner", "Northstar Consulting")
     right = add_organization(kernel, "org-gensigma", "GenSigma")
     unrelated = add_organization(kernel, "org-unrelated", "Unrelated Organization")
@@ -369,8 +399,8 @@ def test_business_relationship_is_promoted_and_traversable_from_either_participa
     )
 
     assert record.evidence_ids == ("ev-rel-001",)
-    assert kernel.get_relationships(left["id"]) == [relationship]
-    assert kernel.get_relationships(right["id"]) == [relationship]
+    assert relationships(kernel, left["id"]) == [relationship]
+    assert relationships(kernel, right["id"]) == [relationship]
 
 
 def test_relationship_query_filters_type_and_scope_without_inferring_other_scope() -> None:
@@ -382,13 +412,13 @@ def test_relationship_query_filters_type_and_scope_without_inferring_other_scope
         reason="Evidence supports scoped teaming relationship",
     )
 
-    assert kernel.get_relationships(
+    assert relationships(kernel, 
         left["id"], relationship_type="partner_in", scope_id=right["id"]
     ) == [relationship]
-    assert kernel.get_relationships(
+    assert relationships(kernel, 
         left["id"], relationship_type="customer_of"
     ) == []
-    assert kernel.get_relationships(
+    assert relationships(kernel, 
         left["id"], scope_id=unrelated["id"]
     ) == []
 
@@ -471,15 +501,17 @@ def test_relationship_correction_preserves_history_and_updates_current_traversal
         reason="Correct partner role to subcontractor",
     )
 
-    history = kernel.get_history(relationship["id"])
+    history = kernel.get_history(
+        relationship["id"], security_context=security_context()
+    )
     assert [item["relationship_type"] for item in history] == [
         "partner_in",
         "subcontractor_in",
     ]
-    assert kernel.get_relationships(
+    assert relationships(kernel, 
         left["id"], relationship_type="subcontractor_in"
     ) == [corrected]
-    assert kernel.get_relationships(
+    assert relationships(kernel, 
         left["id"], relationship_type="partner_in"
     ) == []
 
@@ -513,17 +545,17 @@ def test_relationship_temporal_modes_respect_recorded_knowledge_boundary() -> No
         reason="Record retroactive relationship correction",
     )
 
-    current_knowledge = kernel.get_relationships(
+    current_knowledge = relationships(kernel, 
         left["id"],
         as_of="2026-09-15T00:00:00Z",
         temporal_mode="effective_using_current_knowledge",
     )
-    recorded_knowledge = kernel.get_relationships(
+    recorded_knowledge = relationships(kernel, 
         left["id"],
         as_of="2026-09-15T00:00:00Z",
         temporal_mode="accepted_as_recorded_at_time",
     )
-    after_recording = kernel.get_relationships(
+    after_recording = relationships(kernel, 
         left["id"],
         as_of="2026-10-01T00:00:00Z",
         temporal_mode="accepted_as_recorded_at_time",
@@ -563,10 +595,10 @@ def test_relationship_effective_intervals_are_half_open() -> None:
         reason="Apply boundary-aligned relationship correction",
     )
 
-    before = kernel.get_relationships(
+    before = relationships(kernel, 
         left["id"], as_of="2026-09-09T23:59:59Z"
     )
-    at_boundary = kernel.get_relationships(
+    at_boundary = relationships(kernel, 
         left["id"], as_of="2026-09-10T00:00:00Z"
     )
 

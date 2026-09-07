@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gensigma.example/contracts/kernel/authorization-decision.schema.json",
+  "title": "AuthorizationDecision",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "contract_version": {"const": "0.1"},
+    "decision": {"type": "string", "enum": ["allow", "deny"]},
+    "reason_code": {
+      "type": "string",
+      "enum": [
+        "all_applicable_policies_allow",
+        "explicit_test_allow",
+        "pdp_not_configured",
+        "explicit_deny",
+        "allowlist_no_match",
+        "no_authorizing_policy",
+        "source_acl_denied",
+        "source_acl_unresolved",
+        "policy_denied",
+        "policy_unresolved",
+        "invalid_request",
+        "unsupported"
+      ]
+    },
+    "permitted_properties": {
+      "type": "array",
+      "items": {"type": "string"},
+      "uniqueItems": true
+    },
+    "denied_or_redacted_properties": {
+      "type": "array",
+      "items": {"type": "string"},
+      "uniqueItems": true
+    },
+    "evidence_access": {
+      "type": "string",
+      "enum": ["none", "filtered", "full"]
+    },
+    "permitted_evidence_refs": {
+      "type": "array",
+      "items": {"type": "string"},
+      "uniqueItems": true
+    },
+    "obligations": {
+      "type": "array",
+      "items": {"type": "string"},
+      "uniqueItems": true
+    },
+    "evaluated_references": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "reference": {"type": "string", "minLength": 1},
+          "kind": {"type": "string", "enum": ["policy", "source_acl"]},
+          "status": {
+            "type": "string",
+            "enum": ["allow", "deny", "unresolved"]
+          }
+        },
+        "required": ["reference", "kind", "status"]
+      }
+    },
+    "disclose_existence": {"type": "boolean"}
+  },
+  "required": [
+    "contract_version",
+    "decision",
+    "reason_code",
+    "permitted_properties",
+    "denied_or_redacted_properties",
+    "evidence_access",
+    "permitted_evidence_refs",
+    "obligations",
+    "evaluated_references",
+    "disclose_existence"
+  ]
+}

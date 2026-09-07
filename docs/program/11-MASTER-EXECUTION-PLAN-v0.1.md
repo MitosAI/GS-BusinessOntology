@@ -279,20 +279,20 @@ The Initiative contains the following major projects.
 - bidirectional participant traversal;
 - correction/history and canonical-overwrite protection tests.
 
-Linear `GEN-5` produced the first runtime implementation in PR #22. Issue #41 / ADR-004 corrected its semantic identity: `BusinessRelationship` is the sole promotable material relationship; `TypedRelationship` is a non-promotable reusable shape. PR #37 completes the conformance work.
+Linear `GEN-5` produced the first runtime implementation in PR #22. Issue #41 / ADR-004 corrected its semantic identity: `BusinessRelationship` is the sole promotable material relationship; `TypedRelationship` is a non-promotable reusable shape. PR #37 completes conformance and integrates temporal/security query behavior.
 
-### P2.M3 — Temporal / as-of state — NEXT
-- effective-time aware state reads;
-- relationship effective intervals;
-- historical state reconstruction;
+### P2.M3 — Temporal / as-of state — IN REVIEW
+- effective-time aware state reads delivered in PR #36;
+- historical state reconstruction under two explicit temporal modes;
 - no projection of later facts backward;
-- correction versus effective history.
+- relationship effective intervals integrated in PR #37.
 
-### P2.M4 — Security-context enforcement — NEXT
-- caller/security context on reads;
-- evidence/resource filtering;
-- no restricted-data leakage through traversal/search;
-- agent identities governed like humans.
+### P2.M4 — Security-context enforcement — DONE / RELATIONSHIP INTEGRATION IN REVIEW
+- ADR-005 and the injected fail-closed PDP/PEP boundary delivered in PR #45;
+- caller/security context required on reads;
+- property/evidence projection filtering;
+- non-disclosure across denied reads;
+- relationship traversal integration completed in PR #37.
 
 ### P2.M5 — Query / Context API — PLANNED
 - get_object;

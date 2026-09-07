@@ -5,24 +5,37 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "actor_id": {"type": "string", "minLength": 1},
+    "actor_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Opaque exact subject reference; no implicit namespace expansion occurs in v0.1."
+    },
     "actor_type": {
       "type": "string",
       "enum": ["human", "service", "agent", "system"]
     },
     "principal_refs": {
       "type": "array",
-      "items": {"type": "string"},
+      "items": {
+        "type": "string",
+        "description": "Opaque exact subject reference."
+      },
       "uniqueItems": true
     },
     "role_refs": {
       "type": "array",
-      "items": {"type": "string"},
+      "items": {
+        "type": "string",
+        "description": "Opaque exact subject reference."
+      },
       "uniqueItems": true
     },
     "delegation_refs": {
       "type": "array",
-      "items": {"type": "string"},
+      "items": {
+        "type": "string",
+        "description": "Opaque exact subject reference."
+      },
       "uniqueItems": true
     },
     "policy_context": {

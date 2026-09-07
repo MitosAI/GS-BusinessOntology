@@ -5,6 +5,11 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any
 
+from .authorization import (
+    DenyAllPolicyDecisionPoint,
+    PolicyDecisionPoint,
+    project_properties,
+)
 from .contracts import ContractRegistry
 
 
@@ -49,6 +54,10 @@ class TemporalStateNotFound(TemporalQueryError):
 
 
 class AmbiguousTemporalState(TemporalQueryError):
+    pass
+
+
+class AuthorizationDenied(PermissionError):
     pass
 
 
@@ -123,13 +132,90 @@ class BusinessRealityKernel:
     invariants before the program selects production persistence technology.
     """
 
-    def __init__(self, contracts_root: str = "contracts") -> None:
+    def __init__(
+        self,
+        contracts_root: str = "contracts",
+        *,
+        policy_decision_point: PolicyDecisionPoint | None = None,
+    ) -> None:
         self.contracts = ContractRegistry(contracts_root)
+        self._policy_decision_point = (
+            policy_decision_point or DenyAllPolicyDecisionPoint()
+        )
         self._raw_evidence: dict[str, dict[str, Any]] = {}
         self._candidates: dict[str, dict[str, Any]] = {}
         self._canonical_history: dict[str, list[dict[str, Any]]] = {}
         self._promotions: list[PromotionRecord] = []
         self._corrections: list[CorrectionRecord] = []
+
+    def _authorize_and_project(
+        self,
+        resource: dict[str, Any],
+        *,
+        security_context: dict[str, Any],
+        operation: str,
+        resource_id: str,
+        resource_kind: str,
+        projection_kind: str,
+        hidden_error: Exception,
+        as_of: str | None = None,
+        temporal_mode: str | None = None,
+    ) -> dict[str, Any]:
+        self.contracts.validate(
+            "schemas/kernel/security-context.schema.json", security_context
+        )
+        evidence_refs: list[str] = [resource_id] if resource_kind == "evidence" else []
+        for reference in resource.get("provenance_refs", []):
+            if isinstance(reference, str):
+                evidence_refs.append(reference)
+            elif isinstance(reference, dict) and isinstance(reference.get("id"), str):
+                evidence_refs.append(reference["id"])
+        request = {
+            "contract_version": "0.1",
+            "security_context": copy.deepcopy(security_context),
+            "operation": operation,
+            "resource": {
+                "id": resource_id,
+                "kind": resource_kind,
+                "type": resource.get("type"),
+                "model_owner": resource.get("model_owner"),
+                "contract_version": resource.get("contract_version"),
+            },
+            "security_descriptor": copy.deepcopy(resource["security"]),
+            "projection_kind": projection_kind,
+            "resource_properties": sorted(resource),
+            "evidence_refs": sorted(evidence_refs),
+            "temporal_context": {
+                "as_of": as_of,
+                "temporal_mode": temporal_mode,
+            },
+            "request_context": {},
+        }
+        self.contracts.validate(
+            "schemas/kernel/authorization-request.schema.json", request
+        )
+        decision = self._policy_decision_point.evaluate(copy.deepcopy(request))
+        self.contracts.validate(
+            "schemas/kernel/authorization-decision.schema.json", decision
+        )
+        evidence_denied = (
+            projection_kind in {"raw_evidence", "evidence"}
+            and (
+                decision["evidence_access"] == "none"
+                or (
+                    decision["evidence_access"] == "filtered"
+                    and resource_id not in decision["permitted_evidence_refs"]
+                )
+            )
+        )
+        if decision["decision"] != "allow" or evidence_denied:
+            if decision["disclose_existence"]:
+                raise AuthorizationDenied(
+                    f"Authorization denied for {resource_id!r}: "
+                    f"{decision['reason_code']}"
+                )
+            raise hidden_error
+        return project_properties(resource, decision)
 
     # ---------------------------- Evidence ----------------------------
     def append_raw_evidence(self, evidence: dict[str, Any]) -> bool:
@@ -150,11 +236,22 @@ class BusinessRealityKernel:
             f"Raw evidence is immutable: {evidence_id} already exists with different content"
         )
 
-    def get_raw_evidence(self, evidence_id: str) -> dict[str, Any]:
+    def get_raw_evidence(
+        self, evidence_id: str, *, security_context: dict[str, Any]
+    ) -> dict[str, Any]:
         try:
-            return copy.deepcopy(self._raw_evidence[evidence_id])
+            evidence = self._raw_evidence[evidence_id]
         except KeyError as exc:
             raise UnknownEvidence(evidence_id) from exc
+        return self._authorize_and_project(
+            evidence,
+            security_context=security_context,
+            operation="read",
+            resource_id=evidence_id,
+            resource_kind="evidence",
+            projection_kind="raw_evidence",
+            hidden_error=UnknownEvidence(evidence_id),
+        )
 
     # ---------------------------- Candidates ----------------------------
     def propose_candidate(self, candidate: dict[str, Any]) -> bool:
@@ -178,11 +275,25 @@ class BusinessRealityKernel:
             return False
         raise CandidateConflict(f"Candidate {candidate_id} already exists with different content")
 
-    def get_candidate(self, candidate_id: str) -> dict[str, Any]:
+    def _get_candidate(self, candidate_id: str) -> dict[str, Any]:
         try:
             return copy.deepcopy(self._candidates[candidate_id])
         except KeyError as exc:
             raise UnknownCandidate(candidate_id) from exc
+
+    def get_candidate(
+        self, candidate_id: str, *, security_context: dict[str, Any]
+    ) -> dict[str, Any]:
+        candidate = self._get_candidate(candidate_id)
+        return self._authorize_and_project(
+            candidate,
+            security_context=security_context,
+            operation="read",
+            resource_id=candidate_id,
+            resource_kind="candidate",
+            projection_kind="candidate",
+            hidden_error=UnknownCandidate(candidate_id),
+        )
 
     # ---------------------------- Canonical state ----------------------------
     def promote_candidate(
@@ -198,7 +309,7 @@ class BusinessRealityKernel:
         There is intentionally no public direct `put_canonical` method. Canonical state
         can enter through a promotion path so evidence and decision lineage are retained.
         """
-        candidate = self.get_candidate(candidate_id)
+        candidate = self._get_candidate(candidate_id)
         if candidate.get("resolution_status") in {"rejected", "superseded"}:
             raise ValueError(f"Candidate {candidate_id} cannot be promoted from its current state")
 
@@ -218,7 +329,7 @@ class BusinessRealityKernel:
         resource_id = resource["id"]
         if resource_id in self._canonical_history:
             raise CanonicalResourceConflict(
-                f"Canonical resource {resource_id} already exists; use the correction path"
+                f"Canonical resource {resource_id!r} already exists; use the correction path"
             )
         if semantic_type == "BusinessRelationship":
             self._validate_business_relationship(resource, candidate=candidate)
@@ -275,6 +386,7 @@ class BusinessRealityKernel:
         resource_id: str,
         *,
         as_of: str,
+        security_context: dict[str, Any],
         temporal_mode: str = "effective_using_current_knowledge",
     ) -> dict[str, Any]:
         """Return exact point-in-time state under the contracted temporal mode."""
@@ -288,6 +400,74 @@ class BusinessRealityKernel:
             history = self._canonical_history[resource_id]
         except KeyError as exc:
             raise KeyError(f"Unknown canonical resource: {resource_id}") from exc
+        authorized_history = [
+            (
+                resource,
+                self._authorize_and_project(
+                    resource,
+                    security_context=security_context,
+                    operation="read",
+                    resource_id=resource_id,
+                    resource_kind="canonical",
+                    projection_kind="canonical_resource",
+                    hidden_error=KeyError(
+                        f"Unknown canonical resource: {resource_id}"
+                    ),
+                    as_of=as_of,
+                    temporal_mode=temporal_mode,
+                ),
+            )
+            for resource in history
+        ]
+        applicable: list[tuple[datetime, dict[str, Any], dict[str, Any]]] = []
+        for resource, projected in authorized_history:
+            if not _is_effective_at(resource, query_time):
+                continue
+            recorded_at = _parse_temporal_timestamp(
+                resource["recorded_at"], field="recorded_at"
+            )
+            if temporal_mode == "accepted_as_recorded_at_time" and recorded_at > query_time:
+                continue
+            applicable.append((recorded_at, resource, projected))
+        if not applicable:
+            raise TemporalStateNotFound(
+                f"No state for {resource_id!r} applies at {as_of!r} "
+                f"under mode {temporal_mode!r}"
+            )
+        latest_recorded_at = max(
+            recorded_at for recorded_at, _, _ in applicable
+        )
+        winners = [
+            (resource, projected)
+            for recorded_at, resource, projected in applicable
+            if recorded_at == latest_recorded_at
+        ]
+        if len(winners) > 1 and any(
+            resource != winners[0][0] for resource, _ in winners[1:]
+        ):
+            raise AmbiguousTemporalState(
+                f"Multiple states for {resource_id!r} are equally current at {as_of!r}"
+            )
+        return winners[0][1]
+
+    def _select_raw_state(
+        self,
+        resource_id: str,
+        *,
+        as_of: str,
+        temporal_mode: str,
+    ) -> dict[str, Any]:
+        if temporal_mode not in _TEMPORAL_MODES:
+            raise TemporalQueryError(
+                f"Unknown temporal mode {temporal_mode!r}; "
+                f"choose one of {sorted(_TEMPORAL_MODES)}"
+            )
+        query_time = _parse_temporal_timestamp(as_of, field="as_of")
+        try:
+            history = self._canonical_history[resource_id]
+        except KeyError as exc:
+            raise KeyError(f"Unknown canonical resource: {resource_id}") from exc
+
         applicable: list[tuple[datetime, dict[str, Any]]] = []
         for resource in history:
             if not _is_effective_at(resource, query_time):
@@ -313,32 +493,33 @@ class BusinessRealityKernel:
             raise AmbiguousTemporalState(
                 f"Multiple states for {resource_id!r} are equally current at {as_of!r}"
             )
-        return copy.deepcopy(winners[0])
+        return winners[0]
 
     def get_relationships(
         self,
         resource_id: str,
         *,
+        security_context: dict[str, Any],
         relationship_type: str | None = None,
         scope_id: str | None = None,
         as_of: str | None = None,
         temporal_mode: str = "effective_using_current_knowledge",
     ) -> list[dict[str, Any]]:
-        """Return relationships for a participant from either side.
-
-        When as_of is supplied, both the subject and every returned relationship
-        are selected under the same governed temporal mode. Security filtering is a
-        separate bounded increment and must not be inferred from this method.
-        """
+        """Return authorized relationships for a participant from either side."""
         if temporal_mode not in _TEMPORAL_MODES:
             raise TemporalQueryError(
                 f"Unknown temporal mode {temporal_mode!r}; "
                 f"choose one of {sorted(_TEMPORAL_MODES)}"
             )
         if as_of is None:
-            self.get_object(resource_id)
+            self.get_object(resource_id, security_context=security_context)
         else:
-            self.get_state(resource_id, as_of=as_of, temporal_mode=temporal_mode)
+            self.get_state(
+                resource_id,
+                as_of=as_of,
+                security_context=security_context,
+                temporal_mode=temporal_mode,
+            )
 
         matches: list[dict[str, Any]] = []
         for relationship_id, history in self._canonical_history.items():
@@ -348,13 +529,14 @@ class BusinessRealityKernel:
                 relationship = history[-1]
             else:
                 try:
-                    relationship = self.get_state(
+                    relationship = self._select_raw_state(
                         relationship_id,
                         as_of=as_of,
                         temporal_mode=temporal_mode,
                     )
                 except TemporalStateNotFound:
                     continue
+
             participant_ids = {
                 participant["participant_ref"]["id"]
                 for participant in relationship["participants"]
@@ -370,31 +552,61 @@ class BusinessRealityKernel:
                 scope_ref["id"] for scope_ref in relationship["scope_refs"]
             }:
                 continue
-            matches.append(copy.deepcopy(relationship))
+            try:
+                projected = self._authorize_and_project(
+                    relationship,
+                    security_context=security_context,
+                    operation="read",
+                    resource_id=relationship_id,
+                    resource_kind="canonical",
+                    projection_kind="relationship",
+                    hidden_error=KeyError(
+                        f"Unknown canonical resource: {relationship_id}"
+                    ),
+                    as_of=as_of,
+                    temporal_mode=temporal_mode if as_of is not None else None,
+                )
+            except KeyError:
+                continue
+            matches.append(projected)
         return sorted(matches, key=lambda item: item["id"])
 
-    def get_object(self, resource_id: str) -> dict[str, Any]:
+    def get_object(
+        self, resource_id: str, *, security_context: dict[str, Any]
+    ) -> dict[str, Any]:
         try:
-            return copy.deepcopy(self._canonical_history[resource_id][-1])
+            resource = self._canonical_history[resource_id][-1]
         except KeyError as exc:
             raise KeyError(f"Unknown canonical resource: {resource_id}") from exc
+        return self._authorize_and_project(
+            resource,
+            security_context=security_context,
+            operation="read",
+            resource_id=resource_id,
+            resource_kind="canonical",
+            projection_kind="canonical_resource",
+            hidden_error=KeyError(f"Unknown canonical resource: {resource_id}"),
+        )
 
-    def get_history(self, resource_id: str) -> list[dict[str, Any]]:
+    def get_history(
+        self, resource_id: str, *, security_context: dict[str, Any]
+    ) -> list[dict[str, Any]]:
         try:
-            return copy.deepcopy(self._canonical_history[resource_id])
+            history = self._canonical_history[resource_id]
         except KeyError as exc:
             raise KeyError(f"Unknown canonical resource: {resource_id}") from exc
-
-    def get_promotion_records(self, resource_id: str | None = None) -> list[PromotionRecord]:
-        if resource_id is None:
-            return list(self._promotions)
-        return [record for record in self._promotions if record.resource_id == resource_id]
-
-    def get_correction_records(self, resource_id: str | None = None) -> list[CorrectionRecord]:
-        if resource_id is None:
-            return list(self._corrections)
-        return [record for record in self._corrections if record.resource_id == resource_id]
-
+        return [
+            self._authorize_and_project(
+                resource,
+                security_context=security_context,
+                operation="read",
+                resource_id=resource_id,
+                resource_kind="canonical",
+                projection_kind="canonical_history",
+                hidden_error=KeyError(f"Unknown canonical resource: {resource_id}"),
+            )
+            for resource in history
+        ]
 
     def _validate_business_relationship(
         self,
@@ -437,16 +649,29 @@ class BusinessRealityKernel:
     def _validate_canonical_ref(
         self, reference: dict[str, Any], *, purpose: str
     ) -> None:
+        resource_id = reference["id"]
         try:
-            target = self._canonical_history[reference["id"]][-1]
+            canonical = self._canonical_history[resource_id][-1]
         except KeyError as exc:
             raise RelationshipInvariantViolation(
-                f"Relationship {purpose} {reference['id']!r} is not canonical"
+                f"Relationship {purpose} reference {resource_id!r} is not canonical"
             ) from exc
 
         for field in ("type", "model_owner", "contract_version"):
-            if reference[field] != target.get(field):
+            if reference[field] != canonical[field]:
                 raise RelationshipInvariantViolation(
-                    f"Relationship {purpose} reference {reference['id']!r} "
-                    f"has incompatible {field}"
+                    f"Relationship {purpose} reference {resource_id!r} has "
+                    f"incompatible {field}"
                 )
+
+    def get_promotion_records(
+        self, resource_id: str, *, security_context: dict[str, Any]
+    ) -> list[PromotionRecord]:
+        self.get_object(resource_id, security_context=security_context)
+        return [record for record in self._promotions if record.resource_id == resource_id]
+
+    def get_correction_records(
+        self, resource_id: str, *, security_context: dict[str, Any]
+    ) -> list[CorrectionRecord]:
+        self.get_object(resource_id, security_context=security_context)
+        return [record for record in self._corrections if record.resource_id == resource_id]
