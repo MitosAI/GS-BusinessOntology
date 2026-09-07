@@ -93,13 +93,15 @@ This increment applies the merged W6 temporal primitives to relationship travers
 - `accepted_as_recorded_at_time` excludes interpretations recorded after the requested time;
 - exact effective intervals are half-open: `[valid_from, valid_to)`.
 
-It does not claim:
+This increment also composes the merged ADR-005 / PR #45 authorization boundary:
 
-- policy evaluation or non-leakage enforcement;
-- relationship-type-specific authority rules;
-- production transactions or persistence.
+- every relationship traversal requires a validated SecurityContext;
+- every candidate result is evaluated by the injected PDP/PEP boundary;
+- permitted property projection is applied before return;
+- a hidden relationship is omitted without an existence, item, or count signal;
+- diagnostic existence disclosure remains governed by the authorization decision.
 
-Those remain W7 or later governed-action work. Callers must not infer security guarantees from this reference API.
+It does not define new policy semantics, relationship-type-specific authority rules, production transactions, or persistence.
 
 ## Dependencies
 
@@ -107,6 +109,7 @@ Those remain W7 or later governed-action work. Callers must not infer security g
 - `14-TYPED-RELATIONSHIP-AND-ROLE-CATALOG-v0.1.md`;
 - `16-CORE-RESOURCE-ENVELOPE-AND-VERSIONING-v0.1.md`;
 - `02-QUERY-AND-WORKLOAD-CONTRACT-v0.1.md`;
+- `docs/adr/ADR-005-BUSINESS-REALITY-AUTHORIZATION-DECISION-CONTRACT.md`;
 - JSON Schema Draft 2020-12 contracts;
 - T07, T13, T18 and applicable provenance/correction rules.
 
@@ -123,9 +126,10 @@ Those remain W7 or later governed-action work. Callers must not infer security g
 - [x] A promoted relationship is traversable from either participant.
 - [x] Type and scope filters do not infer broader relationships.
 - [x] Relationship traversal honors both temporal modes and half-open effective boundaries.
+- [x] Hidden relationships are omitted through the shared fail-closed authorization boundary.
 - [x] Relationship correction preserves prior interpretation and changes the current traversal result.
 - [x] Repeat promotion cannot bypass correction history.
-- [x] Repository CI passes on the implementation PR (121 tests).
+- [x] Repository CI passes on the implementation PR (143 tests).
 - [x] KOE reviewed the PR against ADR-004 and T07/T13/T18 semantics.
 
 ## Explicit non-scope
@@ -133,8 +137,8 @@ Those remain W7 or later governed-action work. Callers must not infer security g
 - no new canonical object type;
 - no relationship-specific database/table/graph selection;
 - no cardinality constraints beyond semantic minima;
-- no `as_of` implementation;
-- no security policy engine;
+- no new temporal mode or persistence-specific temporal algorithm;
+- no new authorization policy semantics or production policy engine;
 - no multi-hop neighbor traversal;
 - no source connector changes;
 - no autonomous action or external writeback.
