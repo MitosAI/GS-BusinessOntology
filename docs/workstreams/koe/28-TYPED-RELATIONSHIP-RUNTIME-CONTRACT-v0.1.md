@@ -1,7 +1,7 @@
 # Typed Relationship Runtime Contract
 
 **Version:** v0.1  
-**Status:** IMPLEMENTED REFERENCE INCREMENT  
+**Status:** VERIFIED REFERENCE INCREMENT  
 **Owner:** KOE-001 — Knowledge & Ontology Engineering Lead  
 **Execution plan:** `docs/workstreams/koe/25-EXECUTION-PLAN-SEMANTIC-FOUNDATION-TO-RUNTIME-v0.1.md`
 
@@ -119,8 +119,8 @@ Those remain W6 and W7 or later governed-action work. Callers must not infer tho
 - [x] Type and scope filters do not infer broader relationships.
 - [x] Relationship correction preserves prior interpretation and changes the current traversal result.
 - [x] Repeat promotion cannot bypass correction history.
-- [ ] Repository CI passes on the implementation PR.
-- [ ] KOE reviews the PR against semantic correctness.
+- [x] Repository CI passes on the implementation PR (121 tests).
+- [x] KOE reviewed the PR against ADR-004 and T07/T13/T18 semantics.
 
 ## Explicit non-scope
 
