@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 
 import pytest
 
+from gensigma_br.contracts import ContractRegistry
 from gensigma_connectors.graph import GraphClient, GraphHttpResponse, InMemoryCheckpointStore
 from gensigma_connectors.sharepoint import (
     SharePointDeltaSensor,
@@ -266,3 +267,22 @@ def test_malformed_collection_is_rejected_and_envelope_is_noncanonical() -> None
     required = {"evidence_id", "source_system", "source_record_id", "acquired_time", "security", "ingestion_run_id"}
     assert required <= envelope.keys()
     assert not any(key.startswith("canonical") for key in envelope)
+    ContractRegistry().validate("schemas/evidence/raw-evidence.schema.json", dict(envelope))
+
+
+def test_malformed_deleted_facet_is_rejected() -> None:
+    malformed = FakeTransport(
+        [
+            response(
+                200,
+                {
+                    "value": [{"id": "item-1", "deleted": "yes"}],
+                    "@odata.deltaLink": FINAL,
+                },
+            )
+        ]
+    )
+    sharepoint, _ = sensor(malformed)
+    with pytest.raises(SharePointSensorError) as captured:
+        sharepoint.sync(ingestion_run_id="run-malformed")
+    assert captured.value.metadata["category"] == "malformed_response"
