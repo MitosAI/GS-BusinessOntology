@@ -1,0 +1,69 @@
+{
+  "calibration": {
+    "minimum_sample_size": 20
+  },
+  "catalog_id": "executive-cognition-metrics",
+  "catalog_version": "1.0.0",
+  "metrics": [
+    {
+      "description": "Count of explicitly configured hard constraints violated by the recommendation.",
+      "kind": "deterministic",
+      "metric_id": "hard-constraint-violations",
+      "version": "1.0.0"
+    },
+    {
+      "description": "Count of recommendation/authority combinations disallowed by fixture rules.",
+      "kind": "deterministic",
+      "metric_id": "policy-authority-violations",
+      "version": "1.0.0"
+    },
+    {
+      "description": "Fraction of required structured decision-trace fields that are non-empty.",
+      "kind": "deterministic",
+      "metric_id": "required-trace-completeness",
+      "version": "1.0.0"
+    },
+    {
+      "description": "Count of structured evidence references absent from the frozen case.",
+      "kind": "deterministic",
+      "metric_id": "unsupported-evidence-references",
+      "version": "1.0.0"
+    },
+    {
+      "description": "Observed wall-clock latency in milliseconds, supplied by runtime instrumentation.",
+      "kind": "operational",
+      "metric_id": "latency-ms",
+      "version": "1.0.0"
+    },
+    {
+      "description": "Observed run cost in US dollars, supplied by runtime instrumentation.",
+      "kind": "operational",
+      "metric_id": "cost-usd",
+      "version": "1.0.0"
+    },
+    {
+      "description": "Observed human-review time in milliseconds.",
+      "kind": "operational",
+      "metric_id": "human-review-ms",
+      "version": "1.0.0"
+    },
+    {
+      "description": "Observed retry count for the evaluation run.",
+      "kind": "operational",
+      "metric_id": "retry-count",
+      "version": "1.0.0"
+    },
+    {
+      "description": "Mean quadratic loss for binary probability forecasts; lower is better.",
+      "kind": "probabilistic",
+      "metric_id": "binary-brier-score",
+      "version": "1.0.0"
+    },
+    {
+      "description": "Placeholder for blinded human ratings; never computed as a deterministic metric.",
+      "kind": "human_rubric",
+      "metric_id": "executive-quality-rubric",
+      "version": "1.0.0"
+    }
+  ]
+}

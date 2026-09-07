@@ -1,0 +1,36 @@
+{
+  "allowed_authority_statuses_by_recommendation": {
+    "bid": ["approval_required"],
+    "decline": ["approval_required", "executable"],
+    "gather_evidence": ["approval_required", "executable", "authority_unknown"],
+    "seek_partner": ["approval_required", "executable", "authority_unknown"]
+  },
+  "case_id": "synthetic-bid-001",
+  "case_version": "1.0.0",
+  "hard_constraint_rules": [
+    {
+      "prohibited_recommendations_when_unsatisfied": ["bid"],
+      "rule_id": "registration-required"
+    }
+  ],
+  "human_rubric_dimensions": [
+    "evidence_use",
+    "decision_framing",
+    "alternatives",
+    "method_quality",
+    "recommendation_quality",
+    "auditability"
+  ],
+  "human_rubric_version": "executive-quality/1.0.0",
+  "required_trace_fields": [
+    "recommendation",
+    "rationale",
+    "alternatives_considered",
+    "assumptions",
+    "reversal_conditions",
+    "method_trace",
+    "evidence_refs",
+    "authority_status"
+  ],
+  "rules_version": "1.0.0"
+}
