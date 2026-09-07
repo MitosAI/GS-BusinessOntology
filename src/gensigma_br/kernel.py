@@ -28,6 +28,14 @@ class CandidateSemanticTypeMismatch(ValueError):
     pass
 
 
+class CanonicalResourceConflict(ValueError):
+    pass
+
+
+class RelationshipInvariantViolation(ValueError):
+    pass
+
+
 @dataclass(frozen=True)
 class PromotionRecord:
     resource_id: str
@@ -51,7 +59,7 @@ def _utc_now() -> str:
 
 
 class BusinessRealityKernel:
-    """Executable reference kernel for evidence -> candidate -> canonical promotion.
+    """Executable reference kernel for governed Business Reality semantics.
 
     This implementation is deliberately in-memory. It proves semantic and behavioral
     invariants before the program selects production persistence technology.
@@ -127,11 +135,7 @@ class BusinessRealityKernel:
         actor: str,
         reason: str,
     ) -> PromotionRecord:
-        """Promote a governed candidate into canonical Business Reality.
-
-        There is intentionally no public direct `put_canonical` method. Canonical state
-        can enter through a promotion path so evidence and decision lineage are retained.
-        """
+        """Promote a governed candidate into canonical Business Reality."""
         candidate = self.get_candidate(candidate_id)
         if candidate.get("resolution_status") in {"rejected", "superseded"}:
             raise ValueError(f"Candidate {candidate_id} cannot be promoted from its current state")
@@ -148,9 +152,16 @@ class BusinessRealityKernel:
             )
 
         self.contracts.validate_semantic_resource(semantic_type, resource)
-
         resource_id = resource["id"]
-        self._canonical_history.setdefault(resource_id, []).append(copy.deepcopy(resource))
+        if resource_id in self._canonical_history:
+            raise CanonicalResourceConflict(
+                f"Canonical resource {resource_id} already exists; use the correction path"
+            )
+
+        if semantic_type == "BusinessRelationship":
+            self._validate_business_relationship(resource, candidate=candidate)
+
+        self._canonical_history[resource_id] = [copy.deepcopy(resource)]
         record = PromotionRecord(
             resource_id=resource_id,
             candidate_id=candidate_id,
@@ -176,10 +187,16 @@ class BusinessRealityKernel:
         if replacement.get("id") != resource_id:
             raise ValueError("Correction must preserve canonical resource identity")
 
+        current_type = self._canonical_history[resource_id][-1].get("type")
         semantic_type = replacement.get("type")
         if not semantic_type:
             raise ValueError("Corrected resource requires a semantic type")
+        if semantic_type != current_type:
+            raise ValueError("Correction must preserve canonical semantic type")
+
         self.contracts.validate_semantic_resource(semantic_type, replacement)
+        if semantic_type == "BusinessRelationship":
+            self._validate_business_relationship(replacement)
 
         self._canonical_history[resource_id].append(copy.deepcopy(replacement))
         record = CorrectionRecord(
@@ -203,6 +220,42 @@ class BusinessRealityKernel:
         except KeyError as exc:
             raise KeyError(f"Unknown canonical resource: {resource_id}") from exc
 
+    def get_relationships(
+        self,
+        resource_id: str,
+        *,
+        relationship_type: str | None = None,
+        scope_id: str | None = None,
+    ) -> list[dict[str, Any]]:
+        """Return current relationships for a participant, traversable from either side.
+
+        Effective-time and security filtering are intentionally deferred to the next
+        bounded runtime increments. Callers cannot infer those guarantees from this API.
+        """
+        self.get_object(resource_id)
+        matches: list[dict[str, Any]] = []
+        for history in self._canonical_history.values():
+            relationship = history[-1]
+            if relationship.get("type") != "BusinessRelationship":
+                continue
+            participant_ids = {
+                participant["participant_ref"]["id"]
+                for participant in relationship["participants"]
+            }
+            if resource_id not in participant_ids:
+                continue
+            if (
+                relationship_type is not None
+                and relationship["relationship_type"] != relationship_type
+            ):
+                continue
+            if scope_id is not None and scope_id not in {
+                scope_ref["id"] for scope_ref in relationship["scope_refs"]
+            }:
+                continue
+            matches.append(copy.deepcopy(relationship))
+        return sorted(matches, key=lambda item: item["id"])
+
     def get_promotion_records(self, resource_id: str | None = None) -> list[PromotionRecord]:
         if resource_id is None:
             return list(self._promotions)
@@ -212,3 +265,49 @@ class BusinessRealityKernel:
         if resource_id is None:
             return list(self._corrections)
         return [record for record in self._corrections if record.resource_id == resource_id]
+
+    def _validate_business_relationship(
+        self,
+        relationship: dict[str, Any],
+        *,
+        candidate: dict[str, Any] | None = None,
+    ) -> None:
+        if candidate is not None and candidate.get("candidate_type") != "relationship":
+            raise RelationshipInvariantViolation(
+                "BusinessRelationship promotion requires a relationship candidate"
+            )
+
+        participant_keys: set[tuple[str, str, str | None]] = set()
+        for participant in relationship["participants"]:
+            reference = participant["participant_ref"]
+            key = (
+                reference["id"],
+                participant["contextual_role"],
+                participant.get("role_qualifier"),
+            )
+            if key in participant_keys:
+                raise RelationshipInvariantViolation(
+                    "A relationship cannot repeat the same participant, role, and qualifier"
+                )
+            participant_keys.add(key)
+            self._validate_canonical_ref(reference, purpose="participant")
+
+        for reference in relationship["scope_refs"]:
+            self._validate_canonical_ref(reference, purpose="scope")
+
+    def _validate_canonical_ref(
+        self, reference: dict[str, Any], *, purpose: str
+    ) -> None:
+        try:
+            target = self._canonical_history[reference["id"]][-1]
+        except KeyError as exc:
+            raise RelationshipInvariantViolation(
+                f"Relationship {purpose} {reference['id']!r} is not canonical"
+            ) from exc
+
+        for field in ("type", "model_owner", "contract_version"):
+            if reference[field] != target.get(field):
+                raise RelationshipInvariantViolation(
+                    f"Relationship {purpose} reference {reference['id']!r} "
+                    f"has incompatible {field}"
+                )
