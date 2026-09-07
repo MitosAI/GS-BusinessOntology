@@ -23,20 +23,15 @@ class GraphHttpResponse:
 
 
 class GraphTransport(Protocol):
-    def request(
-        self, method: str, url: str, headers: Mapping[str, str]
-    ) -> GraphHttpResponse: ...
+    def request(self, method: str, url: str, headers: Mapping[str, str]) -> GraphHttpResponse: ...
 
 
 class CheckpointStore(Protocol):
     def get(self, key: str) -> str | None: ...
-
     def put(self, key: str, delta_link: str) -> None: ...
 
 
 class InMemoryCheckpointStore:
-    """Reference checkpoint store for tests and bounded development runs."""
-
     def __init__(self) -> None:
         self._links: dict[str, str] = {}
 
@@ -48,21 +43,11 @@ class InMemoryCheckpointStore:
 
 
 class GraphProtocolError(ValueError):
-    """Graph returned a malformed paging or delta response."""
+    pass
 
 
 class GraphRequestError(RuntimeError):
-    """Terminal Graph error with safe operational metadata."""
-
-    def __init__(
-        self,
-        *,
-        status: int,
-        url: str,
-        attempt: int,
-        correlation_id: str,
-        server_request_id: str | None,
-    ) -> None:
+    def __init__(self, *, status: int, url: str, attempt: int, correlation_id: str, server_request_id: str | None) -> None:
         self.metadata = {
             "source": GRAPH_SOURCE,
             "status": status,
@@ -71,15 +56,10 @@ class GraphRequestError(RuntimeError):
             "correlation_id": correlation_id,
             "server_request_id": server_request_id,
         }
-        super().__init__(
-            f"Microsoft Graph request failed with status {status} "
-            f"after attempt {attempt} (correlation_id={correlation_id})"
-        )
+        super().__init__(f"Microsoft Graph request failed with status {status} after attempt {attempt} (correlation_id={correlation_id})")
 
 
 class GraphClient:
-    """Small Graph v1.0 client that keeps identity and HTTP concerns injectable."""
-
     def __init__(
         self,
         *,
@@ -91,41 +71,32 @@ class GraphClient:
         base_url: str = DEFAULT_BASE_URL,
         max_attempts: int = 4,
         base_backoff_seconds: float = 1.0,
+        request_headers: Mapping[str, str] | None = None,
     ) -> None:
         if max_attempts < 1:
             raise ValueError("max_attempts must be at least 1")
         if base_backoff_seconds < 0:
             raise ValueError("base_backoff_seconds cannot be negative")
-
+        protected = {"authorization", "client-request-id", "return-client-request-id"}
+        supplied = {key.casefold() for key in (request_headers or {})}
+        if protected & supplied:
+            raise ValueError("request_headers cannot override authentication or correlation headers")
         self._token_provider = token_provider
         self._transport = transport
         self._sleep = sleep
         self._now = now or (lambda: datetime.now(timezone.utc))
-        self._correlation_id_factory = correlation_id_factory or (
-            lambda: str(uuid4())
-        )
+        self._correlation_id_factory = correlation_id_factory or (lambda: str(uuid4()))
         self._base_url = base_url.rstrip("/") + "/"
         self._max_attempts = max_attempts
         self._base_backoff_seconds = base_backoff_seconds
+        self._request_headers = dict(request_headers or {})
 
     def get_collection(self, path_or_url: str) -> list[Mapping[str, Any]]:
-        """Enumerate a collection by following Graph's opaque next links."""
-
         items, _ = self._walk_pages(self._absolute_url(path_or_url))
         return items
 
-    def sync_delta(
-        self,
-        *,
-        checkpoint_key: str,
-        initial_path_or_url: str,
-        checkpoint_store: CheckpointStore,
-    ) -> list[Mapping[str, Any]]:
-        """Resume a delta traversal and persist only Graph's final opaque link."""
-
-        start = checkpoint_store.get(checkpoint_key) or self._absolute_url(
-            initial_path_or_url
-        )
+    def sync_delta(self, *, checkpoint_key: str, initial_path_or_url: str, checkpoint_store: CheckpointStore) -> list[Mapping[str, Any]]:
+        start = checkpoint_store.get(checkpoint_key) or self._absolute_url(initial_path_or_url)
         items, delta_link = self._walk_pages(start)
         if delta_link is None:
             raise GraphProtocolError("delta response ended without @odata.deltaLink")
@@ -135,68 +106,49 @@ class GraphClient:
     def get(self, path_or_url: str) -> Mapping[str, Any]:
         return self._request(self._absolute_url(path_or_url)).body
 
-    def _walk_pages(
-        self, start_url: str
-    ) -> tuple[list[Mapping[str, Any]], str | None]:
+    def _walk_pages(self, start_url: str) -> tuple[list[Mapping[str, Any]], str | None]:
         url = start_url
         items: list[Mapping[str, Any]] = []
-        delta_link: str | None = None
-
         while True:
             body = self._request(url).body
             page_items = body.get("value")
-            if not isinstance(page_items, list) or not all(
-                isinstance(item, Mapping) for item in page_items
-            ):
+            if not isinstance(page_items, list) or not all(isinstance(item, Mapping) for item in page_items):
                 raise GraphProtocolError("collection response requires a value array")
             items.extend(page_items)
-
             next_link = body.get("@odata.nextLink")
-            final_delta_link = body.get("@odata.deltaLink")
+            delta_link = body.get("@odata.deltaLink")
             if next_link is not None:
                 if not isinstance(next_link, str):
                     raise GraphProtocolError("@odata.nextLink must be a string")
                 url = self._validated_graph_url(next_link)
                 continue
-            if final_delta_link is not None:
-                if not isinstance(final_delta_link, str):
+            if delta_link is not None:
+                if not isinstance(delta_link, str):
                     raise GraphProtocolError("@odata.deltaLink must be a string")
-                delta_link = self._validated_graph_url(final_delta_link)
-            return items, delta_link
+                return items, self._validated_graph_url(delta_link)
+            return items, None
 
     def _request(self, url: str) -> GraphHttpResponse:
         url = self._validated_graph_url(url)
         correlation_id = self._correlation_id_factory()
-
         for attempt in range(1, self._max_attempts + 1):
             token = self._token_provider()
             if not token:
                 raise ValueError("token_provider returned an empty access token")
-            response = self._transport.request(
-                "GET",
-                url,
-                {
-                    "Accept": "application/json",
-                    "Authorization": f"Bearer {token}",
-                    "client-request-id": correlation_id,
-                    "return-client-request-id": "true",
-                },
-            )
+            headers = {
+                "Accept": "application/json",
+                **self._request_headers,
+                "Authorization": f"Bearer {token}",
+                "client-request-id": correlation_id,
+                "return-client-request-id": "true",
+            }
+            response = self._transport.request("GET", url, headers)
             if 200 <= response.status < 300:
                 return response
-
             if response.status in {429, 503} and attempt < self._max_attempts:
                 self._sleep(self._retry_delay(response.headers, attempt))
                 continue
-
-            raise GraphRequestError(
-                status=response.status,
-                url=url,
-                attempt=attempt,
-                correlation_id=correlation_id,
-                server_request_id=self._header(response.headers, "request-id"),
-            )
-
+            raise GraphRequestError(status=response.status, url=url, attempt=attempt, correlation_id=correlation_id, server_request_id=self._header(response.headers, "request-id"))
         raise AssertionError("request loop must return or raise")
 
     def _retry_delay(self, headers: Mapping[str, str], attempt: int) -> float:
@@ -230,7 +182,4 @@ class GraphClient:
     @staticmethod
     def _header(headers: Mapping[str, str], name: str) -> str | None:
         expected = name.casefold()
-        return next(
-            (value for key, value in headers.items() if key.casefold() == expected),
-            None,
-        )
+        return next((value for key, value in headers.items() if key.casefold() == expected), None)
