@@ -43,6 +43,11 @@ fitness_functions:
     phase: runtime_required
     fixtures: [workforce, commercial, finance]
     contract_check: every read/search/traversal is security-context aware and derived projection does not imply evidence access
+    reference_runtime_status: CONTRACT_READY
+    runtime_evidence:
+      - tests/test_authorization.py
+      - src/gensigma_br/authorization.py
+    remaining_gate: search count snippet traversal and DecisionContext APIs must apply the same PEP before FF-006 can be PASS
 
   - id: FF-007
     name: explicit_vs_inferred_decision_trace

@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gensigma.example/contracts/kernel/authorization-request.schema.json",
+  "title": "AuthorizationRequest",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "contract_version": {"const": "0.1"},
+    "security_context": {"$ref": "./security-context.schema.json"},
+    "operation": {"type": "string", "minLength": 1},
+    "resource": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "kind": {
+          "type": "string",
+          "enum": ["canonical", "candidate", "evidence", "audit"]
+        },
+        "type": {"type": ["string", "null"]},
+        "model_owner": {"type": ["string", "null"]},
+        "contract_version": {"type": ["string", "null"]}
+      },
+      "required": ["id", "kind", "type", "model_owner", "contract_version"]
+    },
+    "security_descriptor": {"$ref": "./security-descriptor.schema.json"},
+    "projection_kind": {
+      "type": "string",
+      "enum": [
+        "canonical_resource",
+        "canonical_history",
+        "candidate",
+        "raw_evidence",
+        "audit",
+        "relationship",
+        "search_result",
+        "count",
+        "snippet",
+        "traversal",
+        "evidence",
+        "decision_context"
+      ]
+    },
+    "resource_properties": {
+      "type": "array",
+      "items": {"type": "string"},
+      "uniqueItems": true
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": {"type": "string"},
+      "uniqueItems": true
+    },
+    "temporal_context": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "as_of": {"type": ["string", "null"], "format": "date-time"},
+        "temporal_mode": {"type": ["string", "null"]}
+      },
+      "required": ["as_of", "temporal_mode"]
+    },
+    "request_context": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "required": [
+    "contract_version",
+    "security_context",
+    "operation",
+    "resource",
+    "security_descriptor",
+    "projection_kind",
+    "resource_properties",
+    "evidence_refs",
+    "temporal_context",
+    "request_context"
+  ]
+}

@@ -16,6 +16,7 @@ paths:
         - $ref: '#/components/parameters/ObjectId'
         - $ref: '#/components/parameters/AsOf'
         - $ref: '#/components/parameters/ContractVersion'
+        - $ref: '#/components/parameters/SecurityContext'
       responses:
         '200':
           description: Semantic result
@@ -53,6 +54,7 @@ paths:
         - name: scope_id
           in: query
           schema: {type: string}
+        - $ref: '#/components/parameters/SecurityContext'
       responses:
         '200':
           description: Relationship result
@@ -71,6 +73,7 @@ paths:
           in: query
           required: true
           schema: {type: integer, minimum: 1, maximum: 10}
+        - $ref: '#/components/parameters/SecurityContext'
       responses:
         '200':
           description: Bounded traversal result
@@ -90,6 +93,7 @@ paths:
           schema:
             type: string
             enum: [effective_using_current_knowledge, accepted_as_recorded_at_time]
+        - $ref: '#/components/parameters/SecurityContext'
       responses:
         '200':
           description: Current or historical state outcome
@@ -112,6 +116,7 @@ paths:
         - name: to
           in: query
           schema: {type: string, format: date-time}
+        - $ref: '#/components/parameters/SecurityContext'
       responses:
         '200':
           description: Ordered Event/Decision/Approval/Action/Outcome timeline
@@ -128,6 +133,7 @@ paths:
           in: path
           required: true
           schema: {type: string}
+        - $ref: '#/components/parameters/SecurityContext'
       responses:
         '200':
           description: Security-filtered provenance/evidence
@@ -144,6 +150,7 @@ paths:
           in: path
           required: true
           schema: {type: string}
+        - $ref: '#/components/parameters/SecurityContext'
       responses:
         '200':
           description: Evidence-to-outcome decision trace
@@ -381,8 +388,20 @@ components:
       name: contract_version
       in: header
       schema: {type: string}
+    SecurityContext:
+      name: X-GenSigma-Security-Context
+      in: header
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/kernel/security-context.schema.json'
 
   schemas:
+    AuthorizationRequest:
+      $ref: '../schemas/kernel/authorization-request.schema.json'
+    AuthorizationDecision:
+      $ref: '../schemas/kernel/authorization-decision.schema.json'
     ResultStatus:
       type: string
       enum:

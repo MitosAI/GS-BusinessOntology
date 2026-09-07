@@ -5,6 +5,7 @@ import pytest
 from gensigma_br import (
     AmbiguousTemporalState,
     BusinessRealityKernel,
+    PermissiveTestPolicyDecisionPoint,
     TemporalQueryError,
     TemporalStateNotFound,
     UnsupportedTemporalPrecision,
@@ -28,6 +29,17 @@ def security() -> dict:
         "denied_principals_or_scopes": [],
         "property_restrictions": [],
         "evidence_restrictions": [],
+    }
+
+
+def security_context() -> dict:
+    return {
+        "actor_id": "test:actor",
+        "actor_type": "human",
+        "principal_refs": [],
+        "role_refs": [],
+        "delegation_refs": [],
+        "requested_at": JAN_1,
     }
 
 
@@ -112,7 +124,9 @@ def organization(
 
 
 def prepared_kernel(initial: dict | None = None) -> BusinessRealityKernel:
-    kernel = BusinessRealityKernel()
+    kernel = BusinessRealityKernel(
+        policy_decision_point=PermissiveTestPolicyDecisionPoint()
+    )
     kernel.append_raw_evidence(raw_evidence())
     kernel.propose_candidate(candidate())
     kernel.promote_candidate(
@@ -148,16 +162,19 @@ def test_temporal_modes_do_not_project_later_knowledge_backward() -> None:
     effective = kernel.get_state(
         "org-temporal",
         as_of=FEB_15,
+        security_context=security_context(),
         temporal_mode="effective_using_current_knowledge",
     )
     recorded = kernel.get_state(
         "org-temporal",
         as_of=FEB_15,
+        security_context=security_context(),
         temporal_mode="accepted_as_recorded_at_time",
     )
     discovered_but_not_recorded = kernel.get_state(
         "org-temporal",
         as_of=FEB_25,
+        security_context=security_context(),
         temporal_mode="accepted_as_recorded_at_time",
     )
 
@@ -172,8 +189,12 @@ def test_exact_effective_intervals_are_half_open() -> None:
     )
     correct(kernel, organization("At boundary", valid_from=MAR_1, recorded_at=FEB_1))
 
-    assert kernel.get_state("org-temporal", as_of=FEB_15)["canonical_name"] == "Before boundary"
-    assert kernel.get_state("org-temporal", as_of=MAR_1)["canonical_name"] == "At boundary"
+    assert kernel.get_state(
+        "org-temporal", as_of=FEB_15, security_context=security_context()
+    )["canonical_name"] == "Before boundary"
+    assert kernel.get_state(
+        "org-temporal", as_of=MAR_1, security_context=security_context()
+    )["canonical_name"] == "At boundary"
 
 
 @pytest.mark.parametrize(
@@ -186,30 +207,45 @@ def test_exact_effective_intervals_are_half_open() -> None:
 )
 def test_invalid_temporal_queries_fail_clearly(as_of: str, mode: str) -> None:
     with pytest.raises(TemporalQueryError):
-        prepared_kernel().get_state("org-temporal", as_of=as_of, temporal_mode=mode)
+        prepared_kernel().get_state(
+            "org-temporal",
+            as_of=as_of,
+            security_context=security_context(),
+            temporal_mode=mode,
+        )
 
 
 def test_no_applicable_temporal_state_fails_clearly() -> None:
     kernel = prepared_kernel(organization("Future", valid_from=MAR_1))
     with pytest.raises(TemporalStateNotFound):
-        kernel.get_state("org-temporal", as_of=FEB_15)
+        kernel.get_state(
+            "org-temporal", as_of=FEB_15, security_context=security_context()
+        )
 
 
 def test_non_exact_precision_is_not_guessed() -> None:
     kernel = prepared_kernel(organization("Approximate", precision="approximate"))
     with pytest.raises(UnsupportedTemporalPrecision):
-        kernel.get_state("org-temporal", as_of=FEB_15)
+        kernel.get_state(
+            "org-temporal", as_of=FEB_15, security_context=security_context()
+        )
 
 
 def test_irreducible_overlap_is_reported_as_ambiguous() -> None:
     kernel = prepared_kernel()
     correct(kernel, organization("Conflicting interpretation", recorded_at=JAN_1))
     with pytest.raises(AmbiguousTemporalState):
-        kernel.get_state("org-temporal", as_of=FEB_15)
+        kernel.get_state(
+            "org-temporal", as_of=FEB_15, security_context=security_context()
+        )
 
 
 def test_temporal_reads_and_current_compatibility_return_copies() -> None:
     kernel = prepared_kernel()
-    historical = kernel.get_state("org-temporal", as_of=FEB_15)
+    historical = kernel.get_state(
+        "org-temporal", as_of=FEB_15, security_context=security_context()
+    )
     historical["canonical_name"] = "mutated by caller"
-    assert kernel.get_object("org-temporal")["canonical_name"] == "Initial interpretation"
+    assert kernel.get_object(
+        "org-temporal", security_context=security_context()
+    )["canonical_name"] == "Initial interpretation"

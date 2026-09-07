@@ -8,6 +8,7 @@ from gensigma_br import (
     BusinessRealityKernel,
     CandidateSemanticTypeMismatch,
     ContractViolation,
+    PermissiveTestPolicyDecisionPoint,
 )
 
 
@@ -23,6 +24,17 @@ def security() -> dict:
         "denied_principals_or_scopes": [],
         "property_restrictions": [],
         "evidence_restrictions": [],
+    }
+
+
+def security_context() -> dict:
+    return {
+        "actor_id": "test:actor",
+        "actor_type": "human",
+        "principal_refs": [],
+        "role_refs": [],
+        "delegation_refs": [],
+        "requested_at": NOW,
     }
 
 
@@ -115,7 +127,9 @@ def typed_relationship() -> dict:
 
 
 def prepared_kernel() -> BusinessRealityKernel:
-    kernel = BusinessRealityKernel()
+    kernel = BusinessRealityKernel(
+        policy_decision_point=PermissiveTestPolicyDecisionPoint()
+    )
     kernel.append_raw_evidence(raw_evidence())
     kernel.propose_candidate(relationship_candidate())
     return kernel
@@ -135,7 +149,9 @@ def test_typed_relationship_contract_is_promotable() -> None:
         "schemas/kernel/typed-relationship.schema.json"
     )
     assert record.evidence_ids == ("ev-relationship-001",)
-    assert kernel.get_object("relationship-001")["relationship_state"] == "active"
+    assert kernel.get_object(
+        "relationship-001", security_context=security_context()
+    )["relationship_state"] == "active"
 
 
 @pytest.mark.parametrize(
@@ -201,7 +217,9 @@ def test_typed_relationship_correction_preserves_history() -> None:
         reason="Preserve terminated relationship history",
     )
 
-    assert [item["relationship_state"] for item in kernel.get_history("relationship-001")] == [
+    assert [item["relationship_state"] for item in kernel.get_history(
+        "relationship-001", security_context=security_context()
+    )] == [
         "active",
         "terminated",
     ]
