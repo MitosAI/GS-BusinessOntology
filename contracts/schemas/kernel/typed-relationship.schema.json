@@ -16,11 +16,11 @@
             "type": "object",
             "additionalProperties": false,
             "properties": {
-              "party_ref": {"$ref": "./canonical-ref.schema.json"},
+              "participant_ref": {"$ref": "./canonical-ref.schema.json"},
               "contextual_role": {"type": "string", "minLength": 1},
               "role_qualifier": {"type": ["string", "null"]}
             },
-            "required": ["party_ref", "contextual_role"]
+            "required": ["participant_ref", "contextual_role"]
           }
         },
         "scope_refs": {
