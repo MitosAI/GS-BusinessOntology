@@ -33,6 +33,14 @@ class CandidateSemanticTypeMismatch(ValueError):
     pass
 
 
+class CanonicalResourceConflict(ValueError):
+    pass
+
+
+class RelationshipInvariantViolation(ValueError):
+    pass
+
+
 class TemporalQueryError(ValueError):
     pass
 
@@ -319,7 +327,14 @@ class BusinessRealityKernel:
         self.contracts.validate_semantic_resource(semantic_type, resource)
 
         resource_id = resource["id"]
-        self._canonical_history.setdefault(resource_id, []).append(copy.deepcopy(resource))
+        if resource_id in self._canonical_history:
+            raise CanonicalResourceConflict(
+                f"Canonical resource {resource_id!r} already exists; use the correction path"
+            )
+        if semantic_type == "BusinessRelationship":
+            self._validate_business_relationship(resource, candidate=candidate)
+
+        self._canonical_history[resource_id] = [copy.deepcopy(resource)]
         record = PromotionRecord(
             resource_id=resource_id,
             candidate_id=candidate_id,
@@ -345,10 +360,16 @@ class BusinessRealityKernel:
         if replacement.get("id") != resource_id:
             raise ValueError("Correction must preserve canonical resource identity")
 
+        current_type = self._canonical_history[resource_id][-1].get("type")
         semantic_type = replacement.get("type")
         if not semantic_type:
             raise ValueError("Corrected resource requires a semantic type")
+        if semantic_type != current_type:
+            raise ValueError("Correction must preserve canonical semantic type")
+
         self.contracts.validate_semantic_resource(semantic_type, replacement)
+        if semantic_type == "BusinessRelationship":
+            self._validate_business_relationship(replacement)
 
         self._canonical_history[resource_id].append(copy.deepcopy(replacement))
         record = CorrectionRecord(
@@ -429,6 +450,127 @@ class BusinessRealityKernel:
             )
         return winners[0][1]
 
+    def _select_raw_state(
+        self,
+        resource_id: str,
+        *,
+        as_of: str,
+        temporal_mode: str,
+    ) -> dict[str, Any]:
+        if temporal_mode not in _TEMPORAL_MODES:
+            raise TemporalQueryError(
+                f"Unknown temporal mode {temporal_mode!r}; "
+                f"choose one of {sorted(_TEMPORAL_MODES)}"
+            )
+        query_time = _parse_temporal_timestamp(as_of, field="as_of")
+        try:
+            history = self._canonical_history[resource_id]
+        except KeyError as exc:
+            raise KeyError(f"Unknown canonical resource: {resource_id}") from exc
+
+        applicable: list[tuple[datetime, dict[str, Any]]] = []
+        for resource in history:
+            if not _is_effective_at(resource, query_time):
+                continue
+            recorded_at = _parse_temporal_timestamp(
+                resource["recorded_at"], field="recorded_at"
+            )
+            if temporal_mode == "accepted_as_recorded_at_time" and recorded_at > query_time:
+                continue
+            applicable.append((recorded_at, resource))
+        if not applicable:
+            raise TemporalStateNotFound(
+                f"No state for {resource_id!r} applies at {as_of!r} "
+                f"under mode {temporal_mode!r}"
+            )
+        latest_recorded_at = max(recorded_at for recorded_at, _ in applicable)
+        winners = [
+            resource
+            for recorded_at, resource in applicable
+            if recorded_at == latest_recorded_at
+        ]
+        if len(winners) > 1 and any(resource != winners[0] for resource in winners[1:]):
+            raise AmbiguousTemporalState(
+                f"Multiple states for {resource_id!r} are equally current at {as_of!r}"
+            )
+        return winners[0]
+
+    def get_relationships(
+        self,
+        resource_id: str,
+        *,
+        security_context: dict[str, Any],
+        relationship_type: str | None = None,
+        scope_id: str | None = None,
+        as_of: str | None = None,
+        temporal_mode: str = "effective_using_current_knowledge",
+    ) -> list[dict[str, Any]]:
+        """Return authorized relationships for a participant from either side."""
+        if temporal_mode not in _TEMPORAL_MODES:
+            raise TemporalQueryError(
+                f"Unknown temporal mode {temporal_mode!r}; "
+                f"choose one of {sorted(_TEMPORAL_MODES)}"
+            )
+        if as_of is None:
+            self.get_object(resource_id, security_context=security_context)
+        else:
+            self.get_state(
+                resource_id,
+                as_of=as_of,
+                security_context=security_context,
+                temporal_mode=temporal_mode,
+            )
+
+        matches: list[tuple[str, dict[str, Any]]] = []
+        for relationship_id, history in self._canonical_history.items():
+            if history[-1].get("type") != "BusinessRelationship":
+                continue
+            if as_of is None:
+                relationship = history[-1]
+            else:
+                try:
+                    relationship = self._select_raw_state(
+                        relationship_id,
+                        as_of=as_of,
+                        temporal_mode=temporal_mode,
+                    )
+                except TemporalStateNotFound:
+                    continue
+
+            participant_ids = {
+                participant["participant_ref"]["id"]
+                for participant in relationship["participants"]
+            }
+            if resource_id not in participant_ids:
+                continue
+            if (
+                relationship_type is not None
+                and relationship["relationship_type"] != relationship_type
+            ):
+                continue
+            if scope_id is not None and scope_id not in {
+                scope_ref["id"] for scope_ref in relationship["scope_refs"]
+            }:
+                continue
+            try:
+                projected = self._authorize_and_project(
+                    relationship,
+                    security_context=security_context,
+                    operation="read",
+                    resource_id=relationship_id,
+                    resource_kind="canonical",
+                    projection_kind="relationship",
+                    hidden_error=KeyError(
+                        f"Unknown canonical resource: {relationship_id}"
+                    ),
+                    as_of=as_of,
+                    temporal_mode=temporal_mode if as_of is not None else None,
+                )
+            except KeyError:
+                continue
+            matches.append((relationship_id, projected))
+        return [projected for _, projected in sorted(matches, key=lambda item: item[0])]
+
     def get_object(
         self, resource_id: str, *, security_context: dict[str, Any]
     ) -> dict[str, Any]:
@@ -465,6 +607,62 @@ class BusinessRealityKernel:
             )
             for resource in history
         ]
+
+    def _validate_business_relationship(
+        self,
+        relationship: dict[str, Any],
+        *,
+        candidate: dict[str, Any] | None = None,
+    ) -> None:
+        if candidate is not None and candidate.get("candidate_type") != "relationship":
+            raise RelationshipInvariantViolation(
+                "BusinessRelationship promotion requires a relationship candidate"
+            )
+
+        participant_ids = {
+            participant["participant_ref"]["id"]
+            for participant in relationship["participants"]
+        }
+        if len(participant_ids) < 2:
+            raise RelationshipInvariantViolation(
+                "A relationship requires at least two distinct canonical participants"
+            )
+
+        participant_keys: set[tuple[str, str, str | None]] = set()
+        for participant in relationship["participants"]:
+            reference = participant["participant_ref"]
+            key = (
+                reference["id"],
+                participant["contextual_role"],
+                participant.get("role_qualifier"),
+            )
+            if key in participant_keys:
+                raise RelationshipInvariantViolation(
+                    "A relationship cannot repeat the same participant, role, and qualifier"
+                )
+            participant_keys.add(key)
+            self._validate_canonical_ref(reference, purpose="participant")
+
+        for reference in relationship["scope_refs"]:
+            self._validate_canonical_ref(reference, purpose="scope")
+
+    def _validate_canonical_ref(
+        self, reference: dict[str, Any], *, purpose: str
+    ) -> None:
+        resource_id = reference["id"]
+        try:
+            canonical = self._canonical_history[resource_id][-1]
+        except KeyError as exc:
+            raise RelationshipInvariantViolation(
+                f"Relationship {purpose} reference {resource_id!r} is not canonical"
+            ) from exc
+
+        for field in ("type", "model_owner", "contract_version"):
+            if reference[field] != canonical[field]:
+                raise RelationshipInvariantViolation(
+                    f"Relationship {purpose} reference {resource_id!r} has "
+                    f"incompatible {field}"
+                )
 
     def get_promotion_records(
         self, resource_id: str, *, security_context: dict[str, Any]

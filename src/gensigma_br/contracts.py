@@ -26,16 +26,9 @@ def _schema_name(semantic_type: str) -> str:
 class ContractRegistry:
     """Loads the repository's JSON Schema contracts without choosing a runtime database."""
 
+    # TypedRelationship is a reusable shape, not a promotable semantic identity.
     _KERNEL_CANONICAL_TYPES = frozenset(
-        {
-            "Event",
-            "Assessment",
-            "Decision",
-            "Approval",
-            "Action",
-            "Outcome",
-            "TypedRelationship",
-        }
+        {"Event", "Assessment", "Decision", "Approval", "Action", "Outcome"}
     )
 
     def __init__(self, contracts_root: str | Path = "contracts") -> None:
@@ -70,9 +63,8 @@ class ContractRegistry:
 
         Business Reality object contracts live under ``schemas/business``. A bounded
         set of first-class kernel resources (Event, Assessment, Decision, Approval,
-        Action, Outcome, TypedRelationship) live under ``schemas/kernel``.
-        Helper/kernel component schemas are deliberately not made promotable merely
-        because a file exists.
+        Action, Outcome) live under ``schemas/kernel``. Helper/kernel component schemas
+        are deliberately not made promotable merely because a file exists.
         """
         if not isinstance(semantic_type, str) or not semantic_type.strip():
             raise UnknownSemanticType("Semantic type must be a non-empty string")

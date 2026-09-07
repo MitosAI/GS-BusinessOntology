@@ -7,9 +7,12 @@ import pytest
 from gensigma_br import (
     BusinessRealityKernel,
     CandidateSemanticTypeMismatch,
+    CanonicalResourceConflict,
     ContractViolation,
     EvidenceConflict,
     PermissiveTestPolicyDecisionPoint,
+    ReferencePolicyDecisionPoint,
+    RelationshipInvariantViolation,
     UnknownEvidence,
     UnknownSemanticType,
 )
@@ -249,3 +252,439 @@ def test_correction_preserves_prior_interpretation() -> None:
     assert len(history) == 2
     assert history[0]["canonical_name"] == "SF Airport"
     assert history[1]["canonical_name"] == "San Francisco International Airport"
+
+
+def canonical_ref(resource: dict) -> dict:
+    return {
+        "id": resource["id"],
+        "type": resource["type"],
+        "model_owner": resource["model_owner"],
+        "contract_version": resource["contract_version"],
+        "projection_version": None,
+    }
+
+
+def add_organization(
+    kernel: BusinessRealityKernel, resource_id: str, name: str
+) -> dict:
+    evidence = raw_evidence()
+    evidence["evidence_id"] = f"ev-{resource_id}"
+    evidence["source_record_id"] = f"msg-{resource_id}"
+    evidence["source_reference"] = f"outlook://msg-{resource_id}"
+    evidence["content_hash"] = f"sha256:{resource_id}"
+    evidence["content_pointer"] = f"evidence://ev-{resource_id}"
+    kernel.append_raw_evidence(evidence)
+
+    proposed = candidate()
+    proposed["candidate_id"] = f"cand-{resource_id}"
+    proposed["source_evidence_ids"] = [evidence["evidence_id"]]
+    kernel.propose_candidate(proposed)
+
+    resource = organization(name)
+    resource["id"] = resource_id
+    kernel.promote_candidate(
+        proposed["candidate_id"],
+        resource,
+        actor="relationship-test",
+        reason="Create relationship endpoint",
+    )
+    return resource
+
+
+def relationship_candidate(kernel: BusinessRealityKernel) -> dict:
+    evidence = raw_evidence()
+    evidence["evidence_id"] = "ev-rel-001"
+    evidence["source_record_id"] = "msg-rel-001"
+    evidence["source_reference"] = "outlook://msg-rel-001"
+    evidence["content_hash"] = "sha256:rel-001"
+    evidence["content_pointer"] = "evidence://ev-rel-001"
+    kernel.append_raw_evidence(evidence)
+
+    proposed = candidate()
+    proposed["candidate_id"] = "cand-rel-001"
+    proposed["candidate_type"] = "relationship"
+    proposed["proposed_semantic_type"] = "BusinessRelationship"
+    proposed["source_evidence_ids"] = ["ev-rel-001"]
+    kernel.propose_candidate(proposed)
+    return proposed
+
+
+def business_relationship(
+    left: dict, right: dict, scope: dict
+) -> dict:
+    return {
+        "id": "rel-partner-001",
+        "type": "BusinessRelationship",
+        "model_owner": "business_reality",
+        "contract_version": "0.1",
+        "display_name": "Scoped teaming relationship",
+        "lifecycle_state": "active",
+        "effective_time": {
+            "valid_from": NOW,
+            "valid_to": None,
+            "precision": "exact",
+        },
+        "source_time": NOW,
+        "recorded_at": NOW,
+        "discovered_at": NOW,
+        "epistemic_status": "accepted",
+        "provenance_refs": [],
+        "security": security(),
+        "source_mappings": [],
+        "aliases": [],
+        "audit": {
+            "created_by": "relationship-test",
+            "created_at": NOW,
+            "last_changed_by": None,
+            "last_changed_at": None,
+            "change_reason": None,
+            "change_request_id": None,
+            "approval_ref": None,
+            "correlation_id": None,
+            "supersedes_ids": [],
+            "superseded_by_ids": [],
+            "correction_type": None,
+            "effective_correction_time": None,
+            "recorded_correction_time": None,
+        },
+        "extensions": {},
+        "relationship_family": "Commercial",
+        "relationship_type": "partner_in",
+        "participants": [
+            {
+                "participant_ref": canonical_ref(left),
+                "contextual_role": "TeamingPartner",
+                "role_qualifier": None,
+            },
+            {
+                "participant_ref": canonical_ref(right),
+                "contextual_role": "PrimeContractor",
+                "role_qualifier": None,
+            },
+        ],
+        "scope_refs": [canonical_ref(scope)],
+        "relationship_state": "active",
+    }
+
+
+def relationships(
+    kernel: BusinessRealityKernel, resource_id: str, **kwargs: object
+) -> list[dict]:
+    return kernel.get_relationships(
+        resource_id, security_context=security_context(), **kwargs
+    )
+
+
+def setup_relationship_kernel() -> tuple[
+    BusinessRealityKernel, dict, dict, dict, dict
+]:
+    kernel = BusinessRealityKernel(
+        policy_decision_point=PermissiveTestPolicyDecisionPoint()
+    )
+    left = add_organization(kernel, "org-partner", "Northstar Consulting")
+    right = add_organization(kernel, "org-gensigma", "GenSigma")
+    unrelated = add_organization(kernel, "org-unrelated", "Unrelated Organization")
+    relationship_candidate(kernel)
+    relationship = business_relationship(left, right, right)
+    return kernel, left, right, unrelated, relationship
+
+
+def test_business_relationship_is_promoted_and_traversable_from_either_participant() -> None:
+    kernel, left, right, _, relationship = setup_relationship_kernel()
+
+    record = kernel.promote_candidate(
+        "cand-rel-001",
+        relationship,
+        actor="relationship-reviewer",
+        reason="Evidence supports scoped teaming relationship",
+    )
+
+    assert record.evidence_ids == ("ev-rel-001",)
+    assert relationships(kernel, left["id"]) == [relationship]
+    assert relationships(kernel, right["id"]) == [relationship]
+
+
+def test_relationship_query_filters_type_and_scope_without_inferring_other_scope() -> None:
+    kernel, left, right, unrelated, relationship = setup_relationship_kernel()
+    kernel.promote_candidate(
+        "cand-rel-001",
+        relationship,
+        actor="relationship-reviewer",
+        reason="Evidence supports scoped teaming relationship",
+    )
+
+    assert relationships(kernel, 
+        left["id"], relationship_type="partner_in", scope_id=right["id"]
+    ) == [relationship]
+    assert relationships(kernel, 
+        left["id"], relationship_type="customer_of"
+    ) == []
+    assert relationships(kernel, 
+        left["id"], scope_id=unrelated["id"]
+    ) == []
+
+
+
+def test_hidden_relationship_is_omitted_without_leaking_its_existence() -> None:
+    kernel, left, _, _, relationship = setup_relationship_kernel()
+    for history in kernel._canonical_history.values():
+        history[-1]["security"]["policy_refs"] = ["policy:visible"]
+    relationship["security"]["policy_refs"] = ["policy:hidden"]
+    kernel._policy_decision_point = ReferencePolicyDecisionPoint(
+        policy_decisions={"policy:visible": True, "policy:hidden": False}
+    )
+    kernel.promote_candidate(
+        "cand-rel-001",
+        relationship,
+        actor="relationship-reviewer",
+        reason="Promote relationship hidden from the query subject",
+    )
+
+    assert relationships(kernel, left["id"]) == []
+
+
+
+
+def test_relationship_projection_can_redact_id_without_breaking_ordering() -> None:
+    kernel, left, _, _, relationship = setup_relationship_kernel()
+    for history in kernel._canonical_history.values():
+        history[-1]["security"]["policy_refs"] = ["policy:visible"]
+    relationship["security"]["policy_refs"] = ["policy:visible"]
+    relationship["security"]["property_restrictions"] = ["id"]
+    kernel._policy_decision_point = ReferencePolicyDecisionPoint(
+        policy_decisions={"policy:visible": True}
+    )
+    kernel.promote_candidate(
+        "cand-rel-001",
+        relationship,
+        actor="relationship-reviewer",
+        reason="Promote relationship with governed identity redaction",
+    )
+
+    projected = relationships(kernel, left["id"])
+    assert len(projected) == 1
+    assert "id" not in projected[0]
+    assert projected[0]["relationship_type"] == "partner_in"
+
+
+
+def test_relationship_rejects_unknown_or_incompatible_canonical_references() -> None:
+    kernel, left, right, _, relationship = setup_relationship_kernel()
+    relationship["participants"][0]["participant_ref"]["id"] = "org-missing"
+    with pytest.raises(RelationshipInvariantViolation, match="is not canonical"):
+        kernel.promote_candidate(
+            "cand-rel-001",
+            relationship,
+            actor="relationship-reviewer",
+            reason="Should fail missing participant",
+        )
+
+    relationship = business_relationship(left, right, right)
+    relationship["participants"][0]["participant_ref"]["type"] = "Person"
+    with pytest.raises(RelationshipInvariantViolation, match="incompatible type"):
+        kernel.promote_candidate(
+            "cand-rel-001",
+            relationship,
+            actor="relationship-reviewer",
+            reason="Should fail incompatible reference",
+        )
+
+
+def test_relationship_rejects_duplicate_participant_role_tuple() -> None:
+    kernel, left, right, _, relationship = setup_relationship_kernel()
+    relationship["participants"].append(copy.deepcopy(relationship["participants"][0]))
+
+    with pytest.raises(RelationshipInvariantViolation, match="cannot repeat"):
+        kernel.promote_candidate(
+            "cand-rel-001",
+            relationship,
+            actor="relationship-reviewer",
+            reason="Should fail duplicate participant role",
+        )
+
+
+def test_business_relationship_requires_relationship_candidate() -> None:
+    kernel, left, right, _, relationship = setup_relationship_kernel()
+    entity_candidate = candidate()
+    entity_candidate["candidate_id"] = "cand-entity-rel"
+    entity_candidate["proposed_semantic_type"] = "BusinessRelationship"
+    entity_candidate["source_evidence_ids"] = ["ev-rel-001"]
+    kernel.propose_candidate(entity_candidate)
+
+    with pytest.raises(RelationshipInvariantViolation, match="relationship candidate"):
+        kernel.promote_candidate(
+            "cand-entity-rel",
+            relationship,
+            actor="relationship-reviewer",
+            reason="Should fail candidate category",
+        )
+
+
+def test_relationship_correction_preserves_history_and_updates_current_traversal() -> None:
+    kernel, left, right, _, relationship = setup_relationship_kernel()
+    kernel.promote_candidate(
+        "cand-rel-001",
+        relationship,
+        actor="relationship-reviewer",
+        reason="Initial relationship interpretation",
+    )
+
+    corrected = copy.deepcopy(relationship)
+    corrected["relationship_type"] = "subcontractor_in"
+    corrected["participants"][0]["contextual_role"] = "Subcontractor"
+    corrected["audit"]["last_changed_by"] = "relationship-reviewer"
+    corrected["audit"]["last_changed_at"] = NOW
+    corrected["audit"]["change_reason"] = "Correct contextual relationship"
+    corrected["audit"]["correction_type"] = "relationship_correction"
+    corrected["audit"]["effective_correction_time"] = NOW
+    corrected["audit"]["recorded_correction_time"] = NOW
+
+    kernel.correct_canonical_state(
+        relationship["id"],
+        corrected,
+        actor="relationship-reviewer",
+        reason="Correct partner role to subcontractor",
+    )
+
+    history = kernel.get_history(
+        relationship["id"], security_context=security_context()
+    )
+    assert [item["relationship_type"] for item in history] == [
+        "partner_in",
+        "subcontractor_in",
+    ]
+    assert relationships(kernel, 
+        left["id"], relationship_type="subcontractor_in"
+    ) == [corrected]
+    assert relationships(kernel, 
+        left["id"], relationship_type="partner_in"
+    ) == []
+
+
+
+def test_relationship_temporal_modes_respect_recorded_knowledge_boundary() -> None:
+    kernel, left, _, _, relationship = setup_relationship_kernel()
+    kernel.promote_candidate(
+        "cand-rel-001",
+        relationship,
+        actor="relationship-reviewer",
+        reason="Initial relationship interpretation",
+    )
+
+    corrected = copy.deepcopy(relationship)
+    corrected["relationship_type"] = "subcontractor_in"
+    corrected["participants"][0]["contextual_role"] = "Subcontractor"
+    corrected["effective_time"]["valid_from"] = "2026-09-10T00:00:00Z"
+    corrected["recorded_at"] = "2026-10-01T00:00:00Z"
+    corrected["discovered_at"] = "2026-09-20T00:00:00Z"
+    corrected["audit"]["last_changed_by"] = "relationship-reviewer"
+    corrected["audit"]["last_changed_at"] = "2026-10-01T00:00:00Z"
+    corrected["audit"]["change_reason"] = "Correct relationship interpretation"
+    corrected["audit"]["correction_type"] = "relationship_correction"
+    corrected["audit"]["effective_correction_time"] = "2026-09-10T00:00:00Z"
+    corrected["audit"]["recorded_correction_time"] = "2026-10-01T00:00:00Z"
+    kernel.correct_canonical_state(
+        relationship["id"],
+        corrected,
+        actor="relationship-reviewer",
+        reason="Record retroactive relationship correction",
+    )
+
+    current_knowledge = relationships(kernel, 
+        left["id"],
+        as_of="2026-09-15T00:00:00Z",
+        temporal_mode="effective_using_current_knowledge",
+    )
+    recorded_knowledge = relationships(kernel, 
+        left["id"],
+        as_of="2026-09-15T00:00:00Z",
+        temporal_mode="accepted_as_recorded_at_time",
+    )
+    after_recording = relationships(kernel, 
+        left["id"],
+        as_of="2026-10-01T00:00:00Z",
+        temporal_mode="accepted_as_recorded_at_time",
+    )
+
+    assert current_knowledge[0]["relationship_type"] == "subcontractor_in"
+    assert recorded_knowledge[0]["relationship_type"] == "partner_in"
+    assert after_recording[0]["relationship_type"] == "subcontractor_in"
+
+
+def test_relationship_effective_intervals_are_half_open() -> None:
+    kernel, left, _, _, relationship = setup_relationship_kernel()
+    relationship["effective_time"]["valid_to"] = "2026-09-10T00:00:00Z"
+    kernel.promote_candidate(
+        "cand-rel-001",
+        relationship,
+        actor="relationship-reviewer",
+        reason="Initial bounded relationship interpretation",
+    )
+
+    corrected = copy.deepcopy(relationship)
+    corrected["relationship_type"] = "subcontractor_in"
+    corrected["participants"][0]["contextual_role"] = "Subcontractor"
+    corrected["effective_time"]["valid_from"] = "2026-09-10T00:00:00Z"
+    corrected["effective_time"]["valid_to"] = None
+    corrected["recorded_at"] = "2026-09-09T00:00:00Z"
+    corrected["audit"]["last_changed_by"] = "relationship-reviewer"
+    corrected["audit"]["last_changed_at"] = "2026-09-09T00:00:00Z"
+    corrected["audit"]["change_reason"] = "Close prior interval at correction boundary"
+    corrected["audit"]["correction_type"] = "relationship_correction"
+    corrected["audit"]["effective_correction_time"] = "2026-09-10T00:00:00Z"
+    corrected["audit"]["recorded_correction_time"] = "2026-09-09T00:00:00Z"
+    kernel.correct_canonical_state(
+        relationship["id"],
+        corrected,
+        actor="relationship-reviewer",
+        reason="Apply boundary-aligned relationship correction",
+    )
+
+    before = relationships(kernel, 
+        left["id"], as_of="2026-09-09T23:59:59Z"
+    )
+    at_boundary = relationships(kernel, 
+        left["id"], as_of="2026-09-10T00:00:00Z"
+    )
+
+    assert before[0]["relationship_type"] == "partner_in"
+    assert at_boundary[0]["relationship_type"] == "subcontractor_in"
+
+
+def test_second_promotion_cannot_bypass_canonical_correction_history() -> None:
+    kernel, _, _, _, relationship = setup_relationship_kernel()
+    kernel.promote_candidate(
+        "cand-rel-001",
+        relationship,
+        actor="relationship-reviewer",
+        reason="Initial relationship interpretation",
+    )
+
+    second_candidate = candidate()
+    second_candidate["candidate_id"] = "cand-rel-002"
+    second_candidate["candidate_type"] = "relationship"
+    second_candidate["proposed_semantic_type"] = "BusinessRelationship"
+    second_candidate["source_evidence_ids"] = ["ev-rel-001"]
+    kernel.propose_candidate(second_candidate)
+
+    with pytest.raises(CanonicalResourceConflict, match="use the correction path"):
+        kernel.promote_candidate(
+            "cand-rel-002",
+            relationship,
+            actor="relationship-reviewer",
+            reason="Should not bypass correction history",
+        )
+
+
+def test_relationship_requires_two_distinct_canonical_participants() -> None:
+    kernel, left, right, _, relationship = setup_relationship_kernel()
+    relationship["participants"][1]["participant_ref"] = canonical_ref(left)
+    relationship["participants"][1]["contextual_role"] = "PrimeContractor"
+
+    with pytest.raises(RelationshipInvariantViolation, match="two distinct"):
+        kernel.promote_candidate(
+            "cand-rel-001",
+            relationship,
+            actor="relationship-reviewer",
+            reason="Should fail self-only relationship",
+        )

@@ -67,17 +67,21 @@ Record PASS / GAP / DEFERRED findings.
 
 Bounded runtime work to close semantic gaps discovered in W3 without adding new architecture.
 
-### W5 — Typed relationship increment
+### W5 — Typed relationship increment — IN REVIEW
 
 Implement the existing typed-relationship contract with scope, participant roles, effective time, provenance, security metadata, and correction history.
 
-### W6 — Temporal/as-of increment
+Governing runtime contract: `docs/workstreams/koe/28-TYPED-RELATIONSHIP-RUNTIME-CONTRACT-v0.1.md`.
 
-Implement current and historical reads consistent with effective time vs recorded/discovery time semantics.
+The increment unifies the formerly divergent BusinessRelationship and TypedRelationship shapes, validates canonical participant/scope references, preserves governed promotion/correction, and supports deterministic bidirectional participant traversal. ADR-004 resolves canonical identity. PR #37 integrates temporal selection and fail-closed authorization into that traversal.
 
-### W7 — Security-context increment
+### W6 — Temporal/as-of increment — VERIFIED BASELINE / RELATIONSHIP IN REVIEW
 
-Implement explicit actor/security context and non-leakage behavior for reads/traversals/evidence access.
+PR #36 implements current and historical reads under effective-time versus accepted-as-recorded temporal modes. PR #37 applies the same modes and half-open effective intervals to relationship traversal.
+
+### W7 — Security-context increment — VERIFIED BASELINE / RELATIONSHIP IN REVIEW
+
+ADR-005 and PR #45 implement the injected fail-closed authorization boundary. PR #37 routes relationship traversal through the same security context, projection, and non-disclosure enforcement.
 
 ### W8 — Query-contract increment
 

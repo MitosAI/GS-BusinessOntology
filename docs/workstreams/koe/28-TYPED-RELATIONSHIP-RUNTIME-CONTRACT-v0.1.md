@@ -1,0 +1,150 @@
+# Typed Relationship Runtime Contract
+
+**Version:** v0.1  
+**Status:** VERIFIED REFERENCE INCREMENT  
+**Owner:** KOE-001 — Knowledge & Ontology Engineering Lead  
+**Execution plan:** `docs/workstreams/koe/25-EXECUTION-PLAN-SEMANTIC-FOUNDATION-TO-RUNTIME-v0.1.md`
+
+## Objective
+
+Make the accepted typed-relationship semantics executable in the reference Business Reality kernel without choosing production persistence, temporal-query, or authorization architecture.
+
+## Context
+
+The original contracts contained two incompatible shapes:
+
+- `BusinessRelationship` used `relationship_kind`, `participant_refs`, `scope_ref`, and `status`;
+- `TypedRelationship` used `relationship_family`, `relationship_type`, role-bearing `participants`, `scope_refs`, and `relationship_state`.
+
+The runtime semantic resolver promotes `BusinessRelationship`, while the richer relationship semantics lived only in the separate kernel component. Codex could not implement both without inventing which representation governed.
+
+## Benchmark evidence
+
+Established Palantir ontology practice treats a link type as the schema of a relationship and a link as one relationship instance. A single link supports traversal from both sides; distinct link types between the same objects remain distinct business relationships.
+
+- https://www.palantir.com/docs/foundry/object-link-types/link-types-overview
+- https://www.palantir.com/docs/foundry/ontology/overview
+
+Palantir also treats derived traversal results as security-context-sensitive projections, supporting GenSigma's existing rule that relationship projection must not bypass access policy:
+
+- https://www.palantir.com/docs/foundry/object-link-types/derived-properties
+
+These sources sharpen the existing GenSigma contract; they do not introduce a new ontology doctrine.
+
+## Canonical representation
+
+1. `BusinessRelationship` is the promotable canonical semantic type.
+2. `typed-relationship.schema.json` is its reusable kernel envelope, not a second promotable semantic type.
+3. The BusinessRelationship schema composes the typed-relationship envelope and fixes:
+   - `type = BusinessRelationship`;
+   - `model_owner = business_reality`.
+4. `participant_ref` is a generic canonical reference. It is not named `party_ref`, because cataloged relationships may connect Opportunity, Solicitation, Agreement, Project, Event, Decision, Action, Outcome, and other non-party resources.
+5. Every material relationship has at least two role-bearing participants and at least one explicit canonical scope reference.
+6. Enterprise-wide scope is represented by an explicit canonical enterprise/organization context reference. An empty scope must not silently mean enterprise-wide authority.
+
+## Runtime invariants
+
+### Promotion
+
+- A BusinessRelationship must enter canonical state through a candidate whose `candidate_type` is `relationship`.
+- The candidate's `proposed_semantic_type`, when present, must be `BusinessRelationship`.
+- Each participant and scope reference must resolve to an existing canonical resource.
+- Each reference's `type`, `model_owner`, and `contract_version` must match the referenced canonical resource.
+- The same participant, contextual role, and role qualifier tuple cannot appear twice.
+- At least two distinct canonical participant identities are required. A participant may hold multiple distinct contextual roles only within a relationship that still has at least two distinct participants.
+- A second promotion cannot reuse an existing canonical resource ID. Changes must use the audited correction path.
+- Promotion retains candidate and source-evidence lineage.
+
+### Correction
+
+- Relationship correction preserves the canonical relationship ID and semantic type.
+- Participant, role, relationship type, state, scope, time, provenance, and security corrections are append-only interpretations.
+- Prior accepted interpretations and correction records remain retrievable.
+- Reclassification into another canonical semantic type is not part of ordinary correction.
+
+### Query
+
+- `get_relationships(resource_id)` returns the current accepted relationship interpretation for every relationship in which the resource is a participant.
+- The same relationship is traversable from every participant side; a reverse duplicate relationship is not created.
+- Optional `relationship_type` and `scope_id` filters restrict results without broadening scope.
+- Result ordering is deterministic by relationship ID.
+
+## Failure behavior
+
+The runtime fails explicitly when:
+
+- the candidate is not a relationship candidate;
+- a participant or scope does not exist canonically;
+- a reference claims an incompatible type, model owner, or contract version;
+- an exact participant-role-qualifier tuple is duplicated;
+- a promotion attempts to overwrite an existing canonical ID;
+- a correction attempts to change canonical identity or semantic type.
+
+No failure is converted into an unresolved or accepted relationship silently.
+
+## Security, time, evidence, and authority
+
+This increment preserves security descriptors, effective time, epistemic state, provenance, evidence lineage, and audit metadata.
+
+This increment applies the merged W6 temporal primitives to relationship traversal:
+
+- omitted `as_of` returns the latest accepted interpretation;
+- `effective_using_current_knowledge` applies current knowledge to the requested effective time;
+- `accepted_as_recorded_at_time` excludes interpretations recorded after the requested time;
+- exact effective intervals are half-open: `[valid_from, valid_to)`.
+
+This increment also composes the merged ADR-005 / PR #45 authorization boundary:
+
+- every relationship traversal requires a validated SecurityContext;
+- every candidate result is evaluated by the injected PDP/PEP boundary;
+- permitted property projection is applied before return;
+- a hidden relationship is omitted without an existence, item, or count signal;
+- diagnostic existence disclosure remains governed by the authorization decision.
+
+It does not define new policy semantics, relationship-type-specific authority rules, production transactions, or persistence.
+
+## Dependencies
+
+- merged Business Reality reference kernel;
+- `14-TYPED-RELATIONSHIP-AND-ROLE-CATALOG-v0.1.md`;
+- `16-CORE-RESOURCE-ENVELOPE-AND-VERSIONING-v0.1.md`;
+- `02-QUERY-AND-WORKLOAD-CONTRACT-v0.1.md`;
+- `docs/adr/ADR-005-BUSINESS-REALITY-AUTHORIZATION-DECISION-CONTRACT.md`;
+- JSON Schema Draft 2020-12 contracts;
+- T07, T13, T18 and applicable provenance/correction rules.
+
+## Acceptance criteria and required tests
+
+- [x] BusinessRelationship composes the typed-relationship kernel envelope.
+- [x] Generic canonical participant references replace party-only naming.
+- [x] Scope is explicit and non-empty.
+- [x] Relationship promotion succeeds through evidence -> relationship candidate -> canonical state.
+- [x] Unknown and contract-incompatible participant/scope references fail.
+- [x] Fewer than two distinct canonical participants fail.
+- [x] Exact duplicate participant-role-qualifier tuples fail.
+- [x] A non-relationship candidate cannot promote a BusinessRelationship.
+- [x] A promoted relationship is traversable from either participant.
+- [x] Type and scope filters do not infer broader relationships.
+- [x] Relationship traversal honors both temporal modes and half-open effective boundaries.
+- [x] Hidden relationships are omitted through the shared fail-closed authorization boundary.
+- [x] Relationship correction preserves prior interpretation and changes the current traversal result.
+- [x] Repeat promotion cannot bypass correction history.
+- [x] Repository CI passes on the implementation PR (full repository suite).
+- [x] KOE reviewed the PR against ADR-004 and T07/T13/T18 semantics.
+
+## Explicit non-scope
+
+- no new canonical object type;
+- no relationship-specific database/table/graph selection;
+- no cardinality constraints beyond semantic minima;
+- no new temporal mode or persistence-specific temporal algorithm;
+- no new authorization policy semantics or production policy engine;
+- no multi-hop neighbor traversal;
+- no source connector changes;
+- no autonomous action or external writeback.
+
+## Architecture disposition
+
+`DECIDED` by ADR-004 and Issue #41.
+
+CA-001 confirmed that BusinessRelationship is the sole promotable material-relationship identity and TypedRelationship is a reusable non-promotable kernel shape.
