@@ -444,6 +444,30 @@ def test_hidden_relationship_is_omitted_without_leaking_its_existence() -> None:
 
 
 
+
+def test_relationship_projection_can_redact_id_without_breaking_ordering() -> None:
+    kernel, left, _, _, relationship = setup_relationship_kernel()
+    for history in kernel._canonical_history.values():
+        history[-1]["security"]["policy_refs"] = ["policy:visible"]
+    relationship["security"]["policy_refs"] = ["policy:visible"]
+    relationship["security"]["property_restrictions"] = ["id"]
+    kernel._policy_decision_point = ReferencePolicyDecisionPoint(
+        policy_decisions={"policy:visible": True}
+    )
+    kernel.promote_candidate(
+        "cand-rel-001",
+        relationship,
+        actor="relationship-reviewer",
+        reason="Promote relationship with governed identity redaction",
+    )
+
+    projected = relationships(kernel, left["id"])
+    assert len(projected) == 1
+    assert "id" not in projected[0]
+    assert projected[0]["relationship_type"] == "partner_in"
+
+
+
 def test_relationship_rejects_unknown_or_incompatible_canonical_references() -> None:
     kernel, left, right, _, relationship = setup_relationship_kernel()
     relationship["participants"][0]["participant_ref"]["id"] = "org-missing"

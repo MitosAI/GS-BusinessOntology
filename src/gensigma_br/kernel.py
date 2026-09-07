@@ -521,7 +521,7 @@ class BusinessRealityKernel:
                 temporal_mode=temporal_mode,
             )
 
-        matches: list[dict[str, Any]] = []
+        matches: list[tuple[str, dict[str, Any]]] = []
         for relationship_id, history in self._canonical_history.items():
             if history[-1].get("type") != "BusinessRelationship":
                 continue
@@ -568,8 +568,8 @@ class BusinessRealityKernel:
                 )
             except KeyError:
                 continue
-            matches.append(projected)
-        return sorted(matches, key=lambda item: item["id"])
+            matches.append((relationship_id, projected))
+        return [projected for _, projected in sorted(matches, key=lambda item: item[0])]
 
     def get_object(
         self, resource_id: str, *, security_context: dict[str, Any]
