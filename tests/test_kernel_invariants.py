@@ -369,7 +369,7 @@ def business_relationship(
 def relationships(
     kernel: BusinessRealityKernel, resource_id: str, **kwargs: object
 ) -> list[dict]:
-    return relationships(kernel, 
+    return kernel.get_relationships(
         resource_id, security_context=security_context(), **kwargs
     )
 
