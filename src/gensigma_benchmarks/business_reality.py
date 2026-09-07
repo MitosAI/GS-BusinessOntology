@@ -12,7 +12,6 @@ from typing import Any, Protocol
 
 SCALE_FACTORS = {"tiny": 1, "small": 5, "medium": 25}
 PENDING_WORKLOADS = {
-    "historical_as_of_read": "temporal runtime is not implemented",
     "security_scoped_traversal": "security enforcement runtime is not implemented",
 }
 
@@ -24,6 +23,7 @@ class Fixture:
     identities: tuple[dict[str, Any], ...]
     relationships: tuple[dict[str, str], ...]
     evidence: tuple[dict[str, str], ...]
+    temporal_states: tuple[dict[str, Any], ...]
 
 
 @dataclass(frozen=True)
@@ -38,14 +38,11 @@ class WorkloadResult:
 
 class BenchmarkAdapter(Protocol):
     def resolve_identity(self, alias: str) -> list[str]: ...
-
     def get_neighbors(self, resource_id: str, depth: int) -> list[str]: ...
-
     def get_evidence(self, resource_id: str) -> list[str]: ...
-
     def promote(self, candidate_id: str, resource_id: str) -> str: ...
-
     def correct(self, resource_id: str, revision: str) -> list[str]: ...
+    def get_state_as_of(self, resource_id: str, as_of: str) -> str | None: ...
 
 
 def build_fixture(scale: str) -> Fixture:
@@ -53,10 +50,10 @@ def build_fixture(scale: str) -> Fixture:
         factor = SCALE_FACTORS[scale]
     except KeyError as exc:
         raise ValueError(f"unknown scale {scale!r}; choose {sorted(SCALE_FACTORS)}") from exc
-
     identities: list[dict[str, Any]] = []
     relationships: list[dict[str, str]] = []
     evidence: list[dict[str, str]] = []
+    temporal_states: list[dict[str, Any]] = []
     for index in range(factor):
         org = f"org-{index:03d}"
         opportunity = f"opportunity-{index:03d}"
@@ -80,7 +77,30 @@ def build_fixture(scale: str) -> Fixture:
                 {"id": f"evidence-{index:03d}-b", "target": opportunity},
             ]
         )
-    return Fixture("0.1", scale, tuple(identities), tuple(relationships), tuple(evidence))
+        temporal_states.extend(
+            [
+                {
+                    "id": opportunity,
+                    "valid_from": "2026-01-01T00:00:00Z",
+                    "valid_to": "2026-07-01T00:00:00Z",
+                    "state": "proposed",
+                },
+                {
+                    "id": opportunity,
+                    "valid_from": "2026-07-01T00:00:00Z",
+                    "valid_to": None,
+                    "state": "active",
+                },
+            ]
+        )
+    return Fixture(
+        "0.2",
+        scale,
+        tuple(identities),
+        tuple(relationships),
+        tuple(evidence),
+        tuple(temporal_states),
+    )
 
 
 class ReferenceAdapter:
@@ -89,12 +109,11 @@ class ReferenceAdapter:
     def __init__(self, fixture: Fixture) -> None:
         self.fixture = fixture
         self._aliases = {
-            alias: item["id"]
-            for item in fixture.identities
-            for alias in item["aliases"]
+            alias: item["id"] for item in fixture.identities for alias in item["aliases"]
         }
         self._edges = [(edge["from"], edge["to"]) for edge in fixture.relationships]
         self._evidence = fixture.evidence
+        self._temporal_states = fixture.temporal_states
         self._canonical: dict[str, list[str]] = {}
 
     def resolve_identity(self, alias: str) -> list[str]:
@@ -127,6 +146,18 @@ class ReferenceAdapter:
         history.append(revision)
         return list(history)
 
+    def get_state_as_of(self, resource_id: str, as_of: str) -> str | None:
+        matches = [
+            item
+            for item in self._temporal_states
+            if item["id"] == resource_id
+            and (item["valid_from"] is None or item["valid_from"] <= as_of)
+            and (item["valid_to"] is None or as_of < item["valid_to"])
+        ]
+        if not matches:
+            return None
+        return max(matches, key=lambda item: item["valid_from"] or "")["state"]
+
 
 def _digest(value: Any) -> str:
     payload = json.dumps(value, sort_keys=True, separators=(",", ":"))
@@ -141,44 +172,46 @@ class BenchmarkRunner:
     def run(self) -> dict[str, Any]:
         factor = SCALE_FACTORS[self.fixture.scale]
         workloads: list[WorkloadResult] = []
-
         identity_results = [self.adapter.resolve_identity(f"C{i}") for i in range(factor)]
         workloads.append(self._complete("canonical_identity_lookup", factor, identity_results))
-
         traversal_results = [
             self.adapter.get_neighbors(f"org-{i:03d}", 2) for i in range(factor)
         ]
         workloads.append(self._complete("typed_relationship_neighborhood", factor, traversal_results))
-
         evidence_results = [
             self.adapter.get_evidence(f"opportunity-{i:03d}") for i in range(factor)
         ]
         workloads.append(self._complete("evidence_lineage", factor, evidence_results))
-
         promotions = [
             self.adapter.promote(f"candidate-{i:03d}", f"canonical-{i:03d}")
             for i in range(factor)
         ]
         workloads.append(self._complete("canonical_promotion", factor, promotions))
-
         corrections = [
             self.adapter.correct(f"canonical-{i:03d}", f"revision-{i:03d}")
             for i in range(factor)
         ]
         workloads.append(self._complete("canonical_correction", factor, corrections))
-
+        temporal_results = [
+            self.adapter.get_state_as_of(
+                f"opportunity-{i:03d}", "2026-08-01T00:00:00Z"
+            )
+            for i in range(factor)
+        ]
+        workloads.append(self._complete("historical_as_of_read", factor, temporal_results))
         workloads.extend(
             WorkloadResult(name, "pending", 0, 0, None, reason)
             for name, reason in sorted(PENDING_WORKLOADS.items())
         )
         result = {
-            "benchmark_version": "0.1",
+            "benchmark_version": "0.2",
             "fixture_version": self.fixture.version,
             "scale": self.fixture.scale,
             "cardinality": {
                 "identities": len(self.fixture.identities),
                 "relationships": len(self.fixture.relationships),
                 "evidence": len(self.fixture.evidence),
+                "temporal_states": len(self.fixture.temporal_states),
             },
             "workloads": [asdict(item) for item in workloads],
         }

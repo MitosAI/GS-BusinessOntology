@@ -1,12 +1,13 @@
 {
-  "benchmark_version": "0.1",
+  "benchmark_version": "0.2",
   "cardinality": {
     "evidence": 10,
     "identities": 15,
-    "relationships": 10
+    "relationships": 10,
+    "temporal_states": 10
   },
-  "fixture_version": "0.1",
-  "result_digest": "95b74367a7114ea9870192517950e7e6426faf3f146915e4ad52a4006b515a1c",
+  "fixture_version": "0.2",
+  "result_digest": "9733ae50f0f4c9963c147cf38f2a5a48a17ae7da79622e0605a27e9624b64545",
   "scale": "small",
   "workloads": [
     {
@@ -50,12 +51,12 @@
       "status": "complete"
     },
     {
-      "digest": null,
+      "digest": "c0a246f55c9969fc3b49850d27ef6599d325ffe5cba39d14835a7697c012e5eb",
       "name": "historical_as_of_read",
-      "operation_count": 0,
-      "reason": "temporal runtime is not implemented",
-      "result_count": 0,
-      "status": "pending"
+      "operation_count": 5,
+      "reason": null,
+      "result_count": 5,
+      "status": "complete"
     },
     {
       "digest": null,
