@@ -67,9 +67,13 @@ Record PASS / GAP / DEFERRED findings.
 
 Bounded runtime work to close semantic gaps discovered in W3 without adding new architecture.
 
-### W5 — Typed relationship increment
+### W5 — Typed relationship increment — IMPLEMENTED / VERIFYING
 
 Implement the existing typed-relationship contract with scope, participant roles, effective time, provenance, security metadata, and correction history.
+
+Governing runtime contract: `docs/workstreams/koe/28-TYPED-RELATIONSHIP-RUNTIME-CONTRACT-v0.1.md`.
+
+The increment unifies the formerly divergent BusinessRelationship and TypedRelationship shapes, validates canonical participant/scope references, preserves governed promotion/correction, and supports deterministic bidirectional participant traversal. Completion remains gated on CI and KOE semantic review.
 
 ### W6 — Temporal/as-of increment
 
@@ -132,8 +136,8 @@ PR #7 verification additionally requires:
 
 ## Risks / unknowns
 
-- current KOE PR #3 still contains stale `BUILD SPEC 001` naming in several artifact filenames/text;
-- reference kernel PR #7 is stacked on KOE PR #3 and must be retargeted/rebased after PR #3 is reconciled;
+- W5 intentionally preserves but does not enforce security policy; W7 must close non-leakage before relationship traversal is exposed beyond the reference kernel;
+- W5 returns current relationship interpretations only; W6 owns effective-time and accepted-as-recorded temporal modes;
 - runtime performance/scale targets remain open pending Platform measurement;
 - production persistence/search/cloud topology remain intentionally undecided.
 
