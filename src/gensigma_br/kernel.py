@@ -277,6 +277,15 @@ class BusinessRealityKernel:
                 "BusinessRelationship promotion requires a relationship candidate"
             )
 
+        participant_ids = {
+            participant["participant_ref"]["id"]
+            for participant in relationship["participants"]
+        }
+        if len(participant_ids) < 2:
+            raise RelationshipInvariantViolation(
+                "A relationship requires at least two distinct canonical participants"
+            )
+
         participant_keys: set[tuple[str, str, str | None]] = set()
         for participant in relationship["participants"]:
             reference = participant["participant_ref"]
