@@ -1,0 +1,62 @@
+{
+  "catalog_version": "cognition-metrics/1.0.0",
+  "metrics": [
+    {
+      "description": "Count of violated explicit hard-constraint rules.",
+      "metric_id": "hard-constraint-violations",
+      "metric_kind": "deterministic",
+      "metric_version": "1.0.0"
+    },
+    {
+      "description": "Count of violated explicit policy or authority rules.",
+      "metric_id": "policy-authority-violations",
+      "metric_kind": "deterministic",
+      "metric_version": "1.0.0"
+    },
+    {
+      "description": "Fraction of explicitly required output fields that are populated.",
+      "metric_id": "required-field-completeness",
+      "metric_kind": "deterministic",
+      "metric_version": "1.0.0"
+    },
+    {
+      "description": "Count of invalid evidence references and unsupported structured claims.",
+      "metric_id": "evidence-reference-validity",
+      "metric_kind": "deterministic",
+      "metric_version": "1.0.0"
+    },
+    {
+      "description": "Run latency with optional recorded cost; no combined efficiency score.",
+      "metric_id": "operational-metadata",
+      "metric_kind": "operational",
+      "metric_version": "1.0.0"
+    },
+    {
+      "description": "Mean binary Brier score with every raw forecast and outcome retained.",
+      "metric_id": "binary-brier-score",
+      "metric_kind": "probabilistic",
+      "metric_version": "1.0.0"
+    },
+    {
+      "description": "Eligibility marker for later calibration analysis; never creates bins automatically.",
+      "metric_id": "binary-calibration-summary",
+      "metric_kind": "probabilistic",
+      "metric_version": "1.0.0",
+      "minimum_sample_size": 30
+    },
+    {
+      "description": "Human-only review of executive judgment dimensions.",
+      "dimensions": [
+        "decision_framing",
+        "assumption_quality",
+        "uncertainty_treatment",
+        "reversal_condition_quality"
+      ],
+      "metric_id": "executive-quality-rubric",
+      "metric_kind": "human_rubric",
+      "metric_version": "1.0.0",
+      "rubric_id": "executive-cognition-review",
+      "rubric_version": "1.0.0"
+    }
+  ]
+}
