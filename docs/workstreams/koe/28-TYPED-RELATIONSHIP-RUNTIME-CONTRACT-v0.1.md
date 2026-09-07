@@ -51,7 +51,7 @@ These sources sharpen the existing GenSigma contract; they do not introduce a ne
 - Each participant and scope reference must resolve to an existing canonical resource.
 - Each reference's `type`, `model_owner`, and `contract_version` must match the referenced canonical resource.
 - The same participant, contextual role, and role qualifier tuple cannot appear twice.
-- One participant may hold multiple distinct contextual roles where business truth requires it.
+- At least two distinct canonical participant identities are required. A participant may hold multiple distinct contextual roles only within a relationship that still has at least two distinct participants.
 - A second promotion cannot reuse an existing canonical resource ID. Changes must use the audited correction path.
 - Promotion retains candidate and source-evidence lineage.
 
@@ -112,6 +112,7 @@ Those remain W6 and W7 or later governed-action work. Callers must not infer tho
 - [x] Scope is explicit and non-empty.
 - [x] Relationship promotion succeeds through evidence -> relationship candidate -> canonical state.
 - [x] Unknown and contract-incompatible participant/scope references fail.
+- [x] Fewer than two distinct canonical participants fail.
 - [x] Exact duplicate participant-role-qualifier tuples fail.
 - [x] A non-relationship candidate cannot promote a BusinessRelationship.
 - [x] A promoted relationship is traversable from either participant.
@@ -134,6 +135,6 @@ Those remain W6 and W7 or later governed-action work. Callers must not infer tho
 
 ## Architecture disposition
 
-`LOCAL_SOLVE`.
+`DECIDED` by ADR-004 and Issue #41.
 
-This change resolves an inconsistency inside already-approved KOE semantics. It does not alter cross-workstream ownership, the Build Spec 001 boundary, or production platform architecture.
+CA-001 confirmed that BusinessRelationship is the sole promotable material-relationship identity and TypedRelationship is a reusable non-promotable kernel shape.
