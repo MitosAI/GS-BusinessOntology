@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from hashlib import sha256
 from typing import Any
-from urllib.parse import quote
+from urllib.parse import quote, urlencode
 
 from .graph import CheckpointStore, GraphClient, GraphProtocolError, GraphRequestError, InMemoryCheckpointStore
 
@@ -61,14 +61,25 @@ class OutlookDeltaSensor:
         self._config = config
         self._clock = clock or (lambda: datetime.now(timezone.utc))
 
-    def sync(self, *, ingestion_run_id: str, emit: Callable[[Mapping[str, Any]], bool] | None = None) -> OutlookSyncResult:
+    def sync(
+        self,
+        *,
+        ingestion_run_id: str,
+        emit: Callable[[Mapping[str, Any]], bool] | None = None,
+        received_after: datetime | None = None,
+    ) -> OutlookSyncResult:
         if not ingestion_run_id:
             raise ValueError("ingestion_run_id is required")
         all_envelopes: list[Mapping[str, Any]] = []
         emitted = duplicates = tombstones = 0
         keys: list[str] = []
         for folder in FOLDERS:
-            result = self.sync_folder(folder, ingestion_run_id=ingestion_run_id, emit=emit)
+            result = self.sync_folder(
+                folder,
+                ingestion_run_id=ingestion_run_id,
+                emit=emit,
+                received_after=received_after,
+            )
             all_envelopes.extend(result.envelopes)
             emitted += result.emitted_count
             duplicates += result.duplicate_count
@@ -76,14 +87,21 @@ class OutlookDeltaSensor:
             keys.extend(result.checkpoint_keys)
         return OutlookSyncResult(tuple(all_envelopes), emitted, duplicates, tombstones, tuple(keys))
 
-    def sync_folder(self, folder: str, *, ingestion_run_id: str, emit: Callable[[Mapping[str, Any]], bool] | None = None) -> OutlookSyncResult:
+    def sync_folder(
+        self,
+        folder: str,
+        *,
+        ingestion_run_id: str,
+        emit: Callable[[Mapping[str, Any]], bool] | None = None,
+        received_after: datetime | None = None,
+    ) -> OutlookSyncResult:
         if folder not in FOLDERS:
             raise ValueError(f"folder must be one of {FOLDERS}")
         checkpoint_key = f"outlook:{self._config.tenant_id}:{self._config.mailbox_id}:folder:{folder}"
         staged = InMemoryCheckpointStore()
         if saved := self._checkpoints.get(checkpoint_key):
             staged.put(checkpoint_key, saved)
-        path = self._delta_path(folder)
+        path = self._delta_path(folder, received_after=received_after)
         try:
             changes = self._graph.sync_delta(checkpoint_key=checkpoint_key, initial_path_or_url=path, checkpoint_store=staged)
             envelopes = self._normalize_changes(changes, folder=folder, ingestion_run_id=ingestion_run_id)
@@ -223,10 +241,26 @@ class OutlookDeltaSensor:
             "evidence_restrictions": ["source-acl-required"],
         }
 
-    def _delta_path(self, folder: str) -> str:
+    def _delta_path(
+        self, folder: str, *, received_after: datetime | None = None
+    ) -> str:
         mailbox = quote(self._config.mailbox_id, safe="")
         select = "id,changeKey,internetMessageId,conversationId,conversationIndex,subject,sender,from,toRecipients,ccRecipients,bccRecipients,createdDateTime,lastModifiedDateTime,sentDateTime,receivedDateTime,hasAttachments"
-        return f"users/{mailbox}/mailFolders/{folder}/messages/delta?$select={select}"
+        query = {"$select": select}
+        if received_after is not None:
+            if received_after.tzinfo is None or received_after.utcoffset() is None:
+                raise ValueError("received_after must be timezone-aware")
+            timestamp = (
+                received_after.astimezone(timezone.utc)
+                .isoformat()
+                .replace("+00:00", "Z")
+            )
+            query["$filter"] = f"receivedDateTime ge {timestamp}"
+            query["$orderby"] = "receivedDateTime desc"
+        return (
+            f"users/{mailbox}/mailFolders/{folder}/messages/delta?"
+            f"{urlencode(query)}"
+        )
 
     def _attachment_path(self, message_id: str) -> str:
         mailbox = quote(self._config.mailbox_id, safe="")
