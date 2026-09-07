@@ -25,6 +25,7 @@
         },
         "scope_refs": {
           "type": "array",
+          "minItems": 1,
           "items": {"$ref": "./canonical-ref.schema.json"}
         },
         "relationship_state": {
