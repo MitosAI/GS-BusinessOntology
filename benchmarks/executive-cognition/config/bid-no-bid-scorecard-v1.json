@@ -1,0 +1,29 @@
+{
+  "configuration_id": "bid-no-bid-static-scorecard",
+  "configuration_version": "1.0.0",
+  "criteria": [
+    {
+      "id": "delivery-fit",
+      "path": "decision_input.context.capability.delivery_fit",
+      "values": {"partial": 0.5, "strong": 1.0, "weak": 0.0},
+      "weight": 0.4
+    },
+    {
+      "id": "registration",
+      "path": "decision_input.context.policy_authority.hard_constraints.0.satisfied",
+      "values": {"false": 0.0, "true": 1.0},
+      "weight": 0.4
+    },
+    {
+      "id": "customer-signal",
+      "path": "decision_input.context.external_reality.customer_signal",
+      "values": {"incumbent favored": 0.2, "neutral": 0.5, "positive": 0.8},
+      "weight": 0.2
+    }
+  ],
+  "thresholds": [
+    {"minimum": 0.65, "recommendation": "bid"},
+    {"minimum": 0.4, "recommendation": "gather_evidence"},
+    {"minimum": 0.0, "recommendation": "decline"}
+  ]
+}
