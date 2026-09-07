@@ -1,0 +1,61 @@
+{
+  "as_of": "2026-08-15T17:00:00Z",
+  "case_id": "synthetic-bid-001",
+  "case_version": "1.0.0",
+  "contract_version": "decision-case/0.1",
+  "decision_class": "bid_no_bid",
+  "decision_input": {
+    "context": {
+      "available_actions": ["bid", "decline", "gather_evidence", "seek_partner"],
+      "business_intent": {"objective_refs": ["objective-public-sector-growth"]},
+      "business_reality": {
+        "estimated_value_usd": 2500000,
+        "opportunity_ref": "opportunity-synthetic-001"
+      },
+      "capability": {"delivery_fit": "partial", "partner_required": true},
+      "external_reality": {"customer_signal": "incumbent favored"},
+      "framing": {
+        "deadline": "2026-08-20T23:59:00Z",
+        "recurrence": "episodic",
+        "reversibility": "costly_to_reverse",
+        "stakes": "high"
+      },
+      "policy_authority": {
+        "hard_constraints": [
+          {"rule_id": "registration-required", "satisfied": true}
+        ],
+        "required_approvals": ["approval-executive-bid"]
+      }
+    },
+    "context_version": "decision-context-projection/0.1",
+    "contradictions": [],
+    "evidence_refs": ["evidence-solicitation-001"],
+    "uncertainties": [
+      {
+        "adequacy": "P1",
+        "evidence_refs": ["evidence-solicitation-001"],
+        "probability": null,
+        "probability_basis_refs": [],
+        "statement": "Competitive win likelihood lacks a defensible reference class.",
+        "type": "forecast",
+        "uncertainty_id": "uncertainty-win-likelihood"
+      }
+    ],
+    "unknowns": ["Competitor pricing", "Partner availability"]
+  },
+  "evidence": [
+    {
+      "available_at": "2026-08-10T12:00:00Z",
+      "content_ref": "evidence://synthetic/solicitation-001",
+      "effective_at": "2026-08-10T12:00:00Z",
+      "epistemic_status": "observed",
+      "evidence_id": "evidence-solicitation-001",
+      "evidence_version": "1.0.0",
+      "provenance_refs": ["raw-evidence-synthetic-001"],
+      "source_ref": "sharepoint://synthetic/solicitation-001",
+      "summary": "Synthetic solicitation requirements"
+    }
+  ],
+  "provenance_refs": ["synthetic-fixture-generator/0.1"],
+  "question": "Should GenSigma bid on the synthetic airport modernization solicitation?"
+}

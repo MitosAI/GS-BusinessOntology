@@ -1,0 +1,15 @@
+{
+  "case_id": "invalid-missing-time",
+  "case_version": "1.0.0",
+  "contract_version": "decision-case/0.1",
+  "decision_class": "bid_no_bid",
+  "decision_input": {
+    "context": {},
+    "context_version": "decision-context-projection/0.1",
+    "evidence_refs": [],
+    "uncertainties": [],
+    "unknowns": []
+  },
+  "evidence": [],
+  "question": "Should the organization bid?"
+}

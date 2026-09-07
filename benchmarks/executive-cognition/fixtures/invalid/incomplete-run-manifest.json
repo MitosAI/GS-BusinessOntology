@@ -1,0 +1,17 @@
+{
+  "arm_ref": {
+    "digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "id": "scorecard-baseline",
+    "version": "1.0.0"
+  },
+  "case_ref": {
+    "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "id": "synthetic-bid-001",
+    "version": "1.0.0"
+  },
+  "contract_version": "evaluation-run/0.1",
+  "run_attempt": 1,
+  "run_id": "run-incomplete-001",
+  "run_version": "1.0.0",
+  "started_at": "2026-09-06T20:00:00Z"
+}
