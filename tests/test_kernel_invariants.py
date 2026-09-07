@@ -484,6 +484,96 @@ def test_relationship_correction_preserves_history_and_updates_current_traversal
     ) == []
 
 
+
+def test_relationship_temporal_modes_respect_recorded_knowledge_boundary() -> None:
+    kernel, left, _, _, relationship = setup_relationship_kernel()
+    kernel.promote_candidate(
+        "cand-rel-001",
+        relationship,
+        actor="relationship-reviewer",
+        reason="Initial relationship interpretation",
+    )
+
+    corrected = copy.deepcopy(relationship)
+    corrected["relationship_type"] = "subcontractor_in"
+    corrected["participants"][0]["contextual_role"] = "Subcontractor"
+    corrected["effective_time"]["valid_from"] = "2026-09-10T00:00:00Z"
+    corrected["recorded_at"] = "2026-10-01T00:00:00Z"
+    corrected["discovered_at"] = "2026-09-20T00:00:00Z"
+    corrected["audit"]["last_changed_by"] = "relationship-reviewer"
+    corrected["audit"]["last_changed_at"] = "2026-10-01T00:00:00Z"
+    corrected["audit"]["change_reason"] = "Correct relationship interpretation"
+    corrected["audit"]["correction_type"] = "relationship_correction"
+    corrected["audit"]["effective_correction_time"] = "2026-09-10T00:00:00Z"
+    corrected["audit"]["recorded_correction_time"] = "2026-10-01T00:00:00Z"
+    kernel.correct_canonical_state(
+        relationship["id"],
+        corrected,
+        actor="relationship-reviewer",
+        reason="Record retroactive relationship correction",
+    )
+
+    current_knowledge = kernel.get_relationships(
+        left["id"],
+        as_of="2026-09-15T00:00:00Z",
+        temporal_mode="effective_using_current_knowledge",
+    )
+    recorded_knowledge = kernel.get_relationships(
+        left["id"],
+        as_of="2026-09-15T00:00:00Z",
+        temporal_mode="accepted_as_recorded_at_time",
+    )
+    after_recording = kernel.get_relationships(
+        left["id"],
+        as_of="2026-10-01T00:00:00Z",
+        temporal_mode="accepted_as_recorded_at_time",
+    )
+
+    assert current_knowledge[0]["relationship_type"] == "subcontractor_in"
+    assert recorded_knowledge[0]["relationship_type"] == "partner_in"
+    assert after_recording[0]["relationship_type"] == "subcontractor_in"
+
+
+def test_relationship_effective_intervals_are_half_open() -> None:
+    kernel, left, _, _, relationship = setup_relationship_kernel()
+    relationship["effective_time"]["valid_to"] = "2026-09-10T00:00:00Z"
+    kernel.promote_candidate(
+        "cand-rel-001",
+        relationship,
+        actor="relationship-reviewer",
+        reason="Initial bounded relationship interpretation",
+    )
+
+    corrected = copy.deepcopy(relationship)
+    corrected["relationship_type"] = "subcontractor_in"
+    corrected["participants"][0]["contextual_role"] = "Subcontractor"
+    corrected["effective_time"]["valid_from"] = "2026-09-10T00:00:00Z"
+    corrected["effective_time"]["valid_to"] = None
+    corrected["recorded_at"] = "2026-09-09T00:00:00Z"
+    corrected["audit"]["last_changed_by"] = "relationship-reviewer"
+    corrected["audit"]["last_changed_at"] = "2026-09-09T00:00:00Z"
+    corrected["audit"]["change_reason"] = "Close prior interval at correction boundary"
+    corrected["audit"]["correction_type"] = "relationship_correction"
+    corrected["audit"]["effective_correction_time"] = "2026-09-10T00:00:00Z"
+    corrected["audit"]["recorded_correction_time"] = "2026-09-09T00:00:00Z"
+    kernel.correct_canonical_state(
+        relationship["id"],
+        corrected,
+        actor="relationship-reviewer",
+        reason="Apply boundary-aligned relationship correction",
+    )
+
+    before = kernel.get_relationships(
+        left["id"], as_of="2026-09-09T23:59:59Z"
+    )
+    at_boundary = kernel.get_relationships(
+        left["id"], as_of="2026-09-10T00:00:00Z"
+    )
+
+    assert before[0]["relationship_type"] == "partner_in"
+    assert at_boundary[0]["relationship_type"] == "subcontractor_in"
+
+
 def test_second_promotion_cannot_bypass_canonical_correction_history() -> None:
     kernel, _, _, _, relationship = setup_relationship_kernel()
     kernel.promote_candidate(

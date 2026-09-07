@@ -86,15 +86,20 @@ No failure is converted into an unresolved or accepted relationship silently.
 
 This increment preserves security descriptors, effective time, epistemic state, provenance, evidence lineage, and audit metadata.
 
+This increment applies the merged W6 temporal primitives to relationship traversal:
+
+- omitted `as_of` returns the latest accepted interpretation;
+- `effective_using_current_knowledge` applies current knowledge to the requested effective time;
+- `accepted_as_recorded_at_time` excludes interpretations recorded after the requested time;
+- exact effective intervals are half-open: `[valid_from, valid_to)`.
+
 It does not claim:
 
-- `as_of` evaluation;
-- recorded-time replay;
 - policy evaluation or non-leakage enforcement;
 - relationship-type-specific authority rules;
 - production transactions or persistence.
 
-Those remain W6 and W7 or later governed-action work. Callers must not infer those guarantees from this reference API.
+Those remain W7 or later governed-action work. Callers must not infer security guarantees from this reference API.
 
 ## Dependencies
 
@@ -117,6 +122,7 @@ Those remain W6 and W7 or later governed-action work. Callers must not infer tho
 - [x] A non-relationship candidate cannot promote a BusinessRelationship.
 - [x] A promoted relationship is traversable from either participant.
 - [x] Type and scope filters do not infer broader relationships.
+- [x] Relationship traversal honors both temporal modes and half-open effective boundaries.
 - [x] Relationship correction preserves prior interpretation and changes the current traversal result.
 - [x] Repeat promotion cannot bypass correction history.
 - [x] Repository CI passes on the implementation PR (121 tests).

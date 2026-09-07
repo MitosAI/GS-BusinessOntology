@@ -47,6 +47,12 @@ paths:
       parameters:
         - $ref: '#/components/parameters/ObjectId'
         - $ref: '#/components/parameters/AsOf'
+        - name: temporal_mode
+          in: query
+          schema:
+            type: string
+            default: effective_using_current_knowledge
+            enum: [effective_using_current_knowledge, accepted_as_recorded_at_time]
         - name: relationship_type
           in: query
           schema: {type: string}

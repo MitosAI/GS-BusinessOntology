@@ -321,18 +321,40 @@ class BusinessRealityKernel:
         *,
         relationship_type: str | None = None,
         scope_id: str | None = None,
+        as_of: str | None = None,
+        temporal_mode: str = "effective_using_current_knowledge",
     ) -> list[dict[str, Any]]:
-        """Return current relationships for a participant from either side.
+        """Return relationships for a participant from either side.
 
-        Effective-time and security filtering are separate bounded increments. Callers
-        cannot infer those guarantees from this current-state reference method.
+        When as_of is supplied, both the subject and every returned relationship
+        are selected under the same governed temporal mode. Security filtering is a
+        separate bounded increment and must not be inferred from this method.
         """
-        self.get_object(resource_id)
+        if temporal_mode not in _TEMPORAL_MODES:
+            raise TemporalQueryError(
+                f"Unknown temporal mode {temporal_mode!r}; "
+                f"choose one of {sorted(_TEMPORAL_MODES)}"
+            )
+        if as_of is None:
+            self.get_object(resource_id)
+        else:
+            self.get_state(resource_id, as_of=as_of, temporal_mode=temporal_mode)
+
         matches: list[dict[str, Any]] = []
-        for history in self._canonical_history.values():
-            relationship = history[-1]
-            if relationship.get("type") != "BusinessRelationship":
+        for relationship_id, history in self._canonical_history.items():
+            if history[-1].get("type") != "BusinessRelationship":
                 continue
+            if as_of is None:
+                relationship = history[-1]
+            else:
+                try:
+                    relationship = self.get_state(
+                        relationship_id,
+                        as_of=as_of,
+                        temporal_mode=temporal_mode,
+                    )
+                except TemporalStateNotFound:
+                    continue
             participant_ids = {
                 participant["participant_ref"]["id"]
                 for participant in relationship["participants"]
