@@ -156,7 +156,7 @@ class BusinessRealityKernel:
         self.contracts.validate(
             "schemas/kernel/security-context.schema.json", security_context
         )
-        evidence_refs: list[str] = []
+        evidence_refs: list[str] = [resource_id] if resource_kind == "evidence" else []
         for reference in resource.get("provenance_refs", []):
             if isinstance(reference, str):
                 evidence_refs.append(reference)
@@ -190,10 +190,17 @@ class BusinessRealityKernel:
         self.contracts.validate(
             "schemas/kernel/authorization-decision.schema.json", decision
         )
-        if decision["decision"] != "allow" or (
+        evidence_denied = (
             projection_kind in {"raw_evidence", "evidence"}
-            and decision["evidence_access"] == "none"
-        ):
+            and (
+                decision["evidence_access"] == "none"
+                or (
+                    decision["evidence_access"] == "filtered"
+                    and resource_id not in decision["permitted_evidence_refs"]
+                )
+            )
+        )
+        if decision["decision"] != "allow" or evidence_denied:
             if decision["disclose_existence"]:
                 raise AuthorizationDenied(
                     f"Authorization denied for {resource_id!r}: "
@@ -372,8 +379,27 @@ class BusinessRealityKernel:
             history = self._canonical_history[resource_id]
         except KeyError as exc:
             raise KeyError(f"Unknown canonical resource: {resource_id}") from exc
-        applicable: list[tuple[datetime, dict[str, Any]]] = []
-        for resource in history:
+        authorized_history = [
+            (
+                resource,
+                self._authorize_and_project(
+                    resource,
+                    security_context=security_context,
+                    operation="read",
+                    resource_id=resource_id,
+                    resource_kind="canonical",
+                    projection_kind="canonical_resource",
+                    hidden_error=KeyError(
+                        f"Unknown canonical resource: {resource_id}"
+                    ),
+                    as_of=as_of,
+                    temporal_mode=temporal_mode,
+                ),
+            )
+            for resource in history
+        ]
+        applicable: list[tuple[datetime, dict[str, Any], dict[str, Any]]] = []
+        for resource, projected in authorized_history:
             if not _is_effective_at(resource, query_time):
                 continue
             recorded_at = _parse_temporal_timestamp(
@@ -381,48 +407,27 @@ class BusinessRealityKernel:
             )
             if temporal_mode == "accepted_as_recorded_at_time" and recorded_at > query_time:
                 continue
-            applicable.append((recorded_at, resource))
+            applicable.append((recorded_at, resource, projected))
         if not applicable:
-            self._authorize_and_project(
-                history[-1],
-                security_context=security_context,
-                operation="read",
-                resource_id=resource_id,
-                resource_kind="canonical",
-                projection_kind="canonical_resource",
-                hidden_error=KeyError(f"Unknown canonical resource: {resource_id}"),
-                as_of=as_of,
-                temporal_mode=temporal_mode,
-            )
             raise TemporalStateNotFound(
                 f"No state for {resource_id!r} applies at {as_of!r} "
                 f"under mode {temporal_mode!r}"
             )
-        latest_recorded_at = max(recorded_at for recorded_at, _ in applicable)
+        latest_recorded_at = max(
+            recorded_at for recorded_at, _, _ in applicable
+        )
         winners = [
-            resource
-            for recorded_at, resource in applicable
+            (resource, projected)
+            for recorded_at, resource, projected in applicable
             if recorded_at == latest_recorded_at
         ]
-        projected_winners = [
-            self._authorize_and_project(
-                resource,
-                security_context=security_context,
-                operation="read",
-                resource_id=resource_id,
-                resource_kind="canonical",
-                projection_kind="canonical_resource",
-                hidden_error=KeyError(f"Unknown canonical resource: {resource_id}"),
-                as_of=as_of,
-                temporal_mode=temporal_mode,
-            )
-            for resource in winners
-        ]
-        if len(winners) > 1 and any(resource != winners[0] for resource in winners[1:]):
+        if len(winners) > 1 and any(
+            resource != winners[0][0] for resource, _ in winners[1:]
+        ):
             raise AmbiguousTemporalState(
                 f"Multiple states for {resource_id!r} are equally current at {as_of!r}"
             )
-        return projected_winners[0]
+        return winners[0][1]
 
     def get_object(
         self, resource_id: str, *, security_context: dict[str, Any]

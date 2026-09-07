@@ -261,6 +261,46 @@ def test_evidence_access_is_independent_of_canonical_visibility() -> None:
         )
 
 
+def test_filtered_evidence_cannot_return_an_excluded_evidence_item() -> None:
+    security = descriptor(evidence_restrictions=["evidence:one"])
+    kernel = kernel_with(
+        ReferencePolicyDecisionPoint(policy_decisions={"policy:read": True})
+    )
+    kernel._raw_evidence["evidence:one"] = {
+        "evidence_id": "evidence:one",
+        "security": security,
+    }
+    with pytest.raises(UnknownEvidence):
+        kernel.get_raw_evidence(
+            "evidence:one", security_context=context()
+        )
+
+
+def test_hidden_temporal_state_is_authorized_before_precision_is_examined() -> None:
+    hidden = resource()
+    hidden["effective_time"]["precision"] = "approximate"
+    kernel = kernel_with(ReferencePolicyDecisionPoint(), item=hidden)
+    with pytest.raises(KeyError):
+        kernel.get_state(
+            "org-secure",
+            as_of=NOW,
+            security_context=context(),
+        )
+
+
+@pytest.mark.parametrize(
+    "method_name", ["get_promotion_records", "get_correction_records"]
+)
+def test_audit_record_reads_use_the_same_policy_enforcement_point(
+    method_name: str,
+) -> None:
+    kernel = kernel_with(ReferencePolicyDecisionPoint())
+    with pytest.raises(KeyError):
+        getattr(kernel, method_name)(
+            "org-secure", security_context=context()
+        )
+
+
 def test_unconfigured_kernel_has_no_implicit_allow_fallback() -> None:
     kernel = kernel_with(None)
     with pytest.raises(KeyError):
