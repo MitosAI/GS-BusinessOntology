@@ -91,11 +91,23 @@ class GraphClient:
         base_url: str = DEFAULT_BASE_URL,
         max_attempts: int = 4,
         base_backoff_seconds: float = 1.0,
+        request_headers: Mapping[str, str] | None = None,
     ) -> None:
         if max_attempts < 1:
             raise ValueError("max_attempts must be at least 1")
         if base_backoff_seconds < 0:
             raise ValueError("base_backoff_seconds cannot be negative")
+
+        protected_headers = {
+            "authorization",
+            "client-request-id",
+            "return-client-request-id",
+        }
+        supplied_headers = {key.casefold() for key in (request_headers or {})}
+        if protected_headers & supplied_headers:
+            raise ValueError(
+                "request_headers cannot override authentication or correlation headers"
+            )
 
         self._token_provider = token_provider
         self._transport = transport
@@ -107,6 +119,7 @@ class GraphClient:
         self._base_url = base_url.rstrip("/") + "/"
         self._max_attempts = max_attempts
         self._base_backoff_seconds = base_backoff_seconds
+        self._request_headers = dict(request_headers or {})
 
     def get_collection(self, path_or_url: str) -> list[Mapping[str, Any]]:
         """Enumerate a collection by following Graph's opaque next links."""
@@ -172,16 +185,14 @@ class GraphClient:
             token = self._token_provider()
             if not token:
                 raise ValueError("token_provider returned an empty access token")
-            response = self._transport.request(
-                "GET",
-                url,
-                {
-                    "Accept": "application/json",
-                    "Authorization": f"Bearer {token}",
-                    "client-request-id": correlation_id,
-                    "return-client-request-id": "true",
-                },
-            )
+            headers = {
+                "Accept": "application/json",
+                **self._request_headers,
+                "Authorization": f"Bearer {token}",
+                "client-request-id": correlation_id,
+                "return-client-request-id": "true",
+            }
+            response = self._transport.request("GET", url, headers)
             if 200 <= response.status < 300:
                 return response
 
