@@ -129,7 +129,7 @@ It does not define new policy semantics, relationship-type-specific authority ru
 - [x] Hidden relationships are omitted through the shared fail-closed authorization boundary.
 - [x] Relationship correction preserves prior interpretation and changes the current traversal result.
 - [x] Repeat promotion cannot bypass correction history.
-- [x] Repository CI passes on the implementation PR (143 tests).
+- [x] Repository CI passes on the implementation PR (full repository suite).
 - [x] KOE reviewed the PR against ADR-004 and T07/T13/T18 semantics.
 
 ## Explicit non-scope
