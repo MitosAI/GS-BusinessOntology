@@ -1,0 +1,14 @@
+{
+  "case_id": "synthetic-bid-001",
+  "case_version": "1.0.0",
+  "contract_version": "held-out-outcome/0.1",
+  "evidence_refs": ["outcome-evidence-award-notice-001"],
+  "observed_at": "2026-10-02T16:00:00Z",
+  "outcome": {
+    "award_result": "loss",
+    "submitted_bid": true
+  },
+  "outcome_id": "outcome-synthetic-bid-001",
+  "outcome_version": "1.0.0",
+  "provenance_refs": ["synthetic-fixture-generator/0.1"]
+}
