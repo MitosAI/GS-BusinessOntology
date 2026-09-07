@@ -121,13 +121,15 @@ class SharePointDeltaSensor:
             raise
         except GraphRequestError as exc:
             raise self._request_error(exc, operation=f"sync:{scope.site_id}:{scope.drive_id}") from exc
-        except (GraphProtocolError, KeyError, TypeError, ValueError) as exc:
+        except (AttributeError, GraphProtocolError, KeyError, TypeError, ValueError) as exc:
             raise SharePointSensorError("malformed_response", operation=f"sync:{scope.site_id}:{scope.drive_id}") from exc
 
     def _normalize_changes(self, changes: Sequence[Mapping[str, Any]], *, scope: SharePointScope, ingestion_run_id: str) -> list[Mapping[str, Any]]:
         unique: dict[str, Mapping[str, Any]] = {}
         for item in changes:
             item_id = _required_string(item, "id")
+            if "deleted" in item and not isinstance(item["deleted"], Mapping):
+                raise GraphProtocolError("deleted must be an object")
             _item_version(item)
             unique[item_id] = item
         return [
